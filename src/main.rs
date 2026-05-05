@@ -1,5 +1,5 @@
 pub mod point;
-pub mod position_types;
+pub mod pos3;
 fn main() {
     println!("Hello, world!");
 }
