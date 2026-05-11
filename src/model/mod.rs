@@ -1,2 +1,2 @@
 pub mod elements;
-pub mod shapes;
+pub mod objects;

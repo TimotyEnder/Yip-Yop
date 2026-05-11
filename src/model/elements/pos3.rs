@@ -1,3 +1,4 @@
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub struct Pos3 {
     x: isize,
     y: isize,
@@ -15,5 +16,14 @@ impl Pos3 {
             y: *y,
             z: *z,
         }
+    }
+    pub fn x(&self) -> isize {
+        self.x
+    }
+    pub fn y(&self) -> isize {
+        self.y
+    }
+    pub fn z(&self) -> isize {
+        self.z
     }
 }
