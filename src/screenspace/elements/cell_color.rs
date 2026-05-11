@@ -1,9 +1,10 @@
-pub struct Color {
+#[derive(Clone, Default)]
+pub struct CellColor {
     r: u8,
     g: u8,
     b: u8,
 }
-impl Color {
+impl CellColor {
     pub fn from_rgb(r: &u8, g: &u8, b: &u8) -> Self {
         Self {
             r: *r,
