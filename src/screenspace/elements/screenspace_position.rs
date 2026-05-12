@@ -1,5 +1,5 @@
 use crate::model::elements::pos3::Pos3;
-#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(Hash, Clone, Copy, Eq)]
 pub struct ScreenPosition {
     x: usize,
     y: usize,
@@ -13,5 +13,10 @@ impl ScreenPosition {
     }
     pub fn y(&self) -> usize {
         self.y
+    }
+}
+impl PartialEq for ScreenPosition {
+    fn eq(&self, other: &Self) -> bool {
+        self.x == other.x && self.y == other.y
     }
 }

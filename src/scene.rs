@@ -11,7 +11,7 @@ pub struct Scene {
 impl Scene {
     pub fn with_dimensions(height: &usize, width: &usize) -> Self {
         Self {
-            screen: Screen::with_dimensions(width, height),
+            screen: Screen::with_dimensions(height, width),
             objects: HashMap::new(),
         }
     }
