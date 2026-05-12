@@ -66,9 +66,9 @@ impl Line {
     }
     fn mid_point(&self) -> Pos3 {
         Pos3::new(
-            &(self.from.x() + self.to.x() / 2),
-            &(self.from.y() + self.to.y() / 2),
-            &(self.from.z() + self.to.z() / 2),
+            &(self.from.x() + self.to.x() / 2.0),
+            &(self.from.y() + self.to.y() / 2.0),
+            &(self.from.z() + self.to.z() / 2.0),
         )
     }
 }

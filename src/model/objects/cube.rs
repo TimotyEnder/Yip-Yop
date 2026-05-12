@@ -16,49 +16,18 @@ pub struct Cube {
 }
 impl Cube {
     pub fn from_center(center: &Pos3, scale: usize) -> Self {
+        let s = scale as f64;
         Self {
             center: *center,
             corners: vec![
-                Pos3::new(
-                    &(center.x() + scale as isize),
-                    &(center.y() + scale as isize),
-                    &(center.z() + scale as isize),
-                ),
-                Pos3::new(
-                    &(center.x() + scale as isize),
-                    &(center.y() + scale as isize),
-                    &(center.z() - scale as isize),
-                ),
-                Pos3::new(
-                    &(center.x() + scale as isize),
-                    &(center.y() - scale as isize),
-                    &(center.z() + scale as isize),
-                ),
-                Pos3::new(
-                    &(center.x() + scale as isize),
-                    &(center.y() - scale as isize),
-                    &(center.z() - scale as isize),
-                ),
-                Pos3::new(
-                    &(center.x() - scale as isize),
-                    &(center.y() + scale as isize),
-                    &(center.z() + scale as isize),
-                ),
-                Pos3::new(
-                    &(center.x() - scale as isize),
-                    &(center.y() + scale as isize),
-                    &(center.z() - scale as isize),
-                ),
-                Pos3::new(
-                    &(center.x() - scale as isize),
-                    &(center.y() - scale as isize),
-                    &(center.z() + scale as isize),
-                ),
-                Pos3::new(
-                    &(center.x() - scale as isize),
-                    &(center.y() - scale as isize),
-                    &(center.z() - scale as isize),
-                ),
+                Pos3::new(&(center.x() + s), &(center.y() + s), &(center.z() + s)),
+                Pos3::new(&(center.x() + s), &(center.y() + s), &(center.z() - s)),
+                Pos3::new(&(center.x() + s), &(center.y() - s), &(center.z() + s)),
+                Pos3::new(&(center.x() + s), &(center.y() - s), &(center.z() - s)),
+                Pos3::new(&(center.x() - s), &(center.y() + s), &(center.z() + s)),
+                Pos3::new(&(center.x() - s), &(center.y() + s), &(center.z() - s)),
+                Pos3::new(&(center.x() - s), &(center.y() - s), &(center.z() + s)),
+                Pos3::new(&(center.x() - s), &(center.y() - s), &(center.z() - s)),
             ],
             outline_color: CellColor::WHITE,
             fill_color: CellColor::BLACK,
@@ -68,18 +37,12 @@ impl Cube {
 impl Drawable for Cube {
     fn draw(&self, screen: &mut crate::screenspace::screen::screen::Screen) {
         let edges = [
-            (0, 1),
-            (0, 2),
-            (0, 4),
-            (3, 1),
-            (3, 2),
-            (3, 7),
-            (5, 1),
-            (5, 4),
-            (5, 7),
-            (6, 2),
-            (6, 4),
-            (6, 7),
+            // back face (z = cz+s): 0--2, 2--6, 6--4, 4--0
+            (0, 2), (2, 6), (6, 4), (4, 0),
+            // front face (z = cz-s): 1--3, 3--7, 7--5, 5--1
+            (1, 3), (3, 7), (7, 5), (5, 1),
+            // connectors between front and back
+            (0, 1), (2, 3), (6, 7), (4, 5),
         ];
 
         for &(from, to) in &edges {
