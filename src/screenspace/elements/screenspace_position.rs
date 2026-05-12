@@ -1,5 +1,5 @@
 use crate::model::elements::pos3::Pos3;
-
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
 pub struct ScreenPosition {
     x: usize,
     y: usize,
