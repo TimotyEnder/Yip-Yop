@@ -42,14 +42,15 @@ impl Line {
         )
     }
     fn move_pos_towards_dir(x_dir: &f64, y_dir: &f64, pos: &mut ScreenPosition) {
-        if (x_dir - y_dir).abs() < 0.01 {
-            if *y_dir > 0.0 {
-                pos.set_y(&(pos.y() + 1));
-                pos.set_x(&(pos.x() + 1));
-            } else {
-                pos.set_y(&(pos.y() - 1));
-                pos.set_x(&(pos.x() - 1));
-            }
+        if (x_dir.abs() - y_dir.abs()).abs() < 0.5 {
+            match *y_dir {
+                n if n < 0.0 => pos.set_y(&(pos.y() - 1)),
+                _ => pos.set_y(&(pos.y() + 1)),
+            };
+            match *x_dir {
+                n if n < 0.0 => pos.set_x(&(pos.x() - 1)),
+                _ => pos.set_x(&(pos.x() + 1)),
+            };
         } else if x_dir.abs() > y_dir.abs() {
             if *x_dir > 0.0 {
                 pos.set_x(&(pos.x() + 1));

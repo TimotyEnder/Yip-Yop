@@ -51,7 +51,7 @@ impl Pos3 {
     pub fn z(&self) -> f64 {
         self.z
     }
-    pub fn rotate(&mut self, angle_x: f64, angle_y: f64, angle_z: f64) {
+    pub fn rotate(&mut self, angle_x: &f64, angle_y: &f64, angle_z: &f64) {
         // Rotate around X axis
         self.rotate_x(angle_x);
         // Rotate around Y axis
@@ -59,7 +59,7 @@ impl Pos3 {
         // Rotate around Z axis
         self.rotate_z(angle_z);
     }
-    fn rotate_x(&mut self, angle: f64) {
+    fn rotate_x(&mut self, angle: &f64) {
         let cos = angle.cos();
         let sin = angle.sin();
 
@@ -67,7 +67,7 @@ impl Pos3 {
         self.y = self.y * cos - self.z * sin;
         self.z = old_y * sin + self.z * cos;
     }
-    fn rotate_y(&mut self, angle: f64) {
+    fn rotate_y(&mut self, angle: &f64) {
         let cos = angle.cos();
         let sin = angle.sin();
 
@@ -75,7 +75,7 @@ impl Pos3 {
         self.x = self.x * cos + self.z * sin;
         self.z = -old_x * sin + self.z * cos;
     }
-    fn rotate_z(&mut self, angle: f64) {
+    fn rotate_z(&mut self, angle: &f64) {
         let cos = angle.cos();
         let sin = angle.sin();
 

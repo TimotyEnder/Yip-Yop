@@ -33,10 +33,33 @@ impl Cube {
             fill_color: CellColor::BLACK,
         }
     }
-    pub fn rotate(&mut self, angle_x: f64, angle_y: f64, angle_z: f64) {
+    pub fn rotate(&mut self, angle_x: &f64, angle_y: &f64, angle_z: &f64) {
         for corner in self.corners.iter_mut() {
-            corner.rotate(angle_x, angle_y, angle_z);
+            Self::transform_into_center_vector_and_rotate(
+                angle_x,
+                angle_y,
+                angle_z,
+                &self.center,
+                corner,
+            );
         }
+    }
+    fn transform_into_center_vector_and_rotate(
+        angle_x: &f64,
+        angle_y: &f64,
+        angle_z: &f64,
+        center: &Pos3,
+        corner: &mut Pos3,
+    ) {
+        let x = corner.x() - center.x();
+        let y = corner.y() - center.y();
+        let z = corner.z() - center.z();
+        *corner = Pos3::new(&x, &y, &z);
+        corner.rotate(angle_x, angle_y, angle_z);
+        let x = corner.x() + center.x();
+        let y = corner.y() + center.y();
+        let z = corner.z() + center.z();
+        *corner = Pos3::new(&x, &y, &z);
     }
 }
 impl Drawable for Cube {
