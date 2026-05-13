@@ -41,6 +41,7 @@ impl Line {
             diffVector.1 as f64 / magnitude,
         )
     }
+    //TODO: change to Bresenham's line algorithm
     fn move_pos_towards_dir(x_dir: &f64, y_dir: &f64, pos: &mut ScreenPosition) {
         if (x_dir.abs() - y_dir.abs()).abs() < 0.5 {
             match *y_dir {
