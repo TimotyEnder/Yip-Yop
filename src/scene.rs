@@ -1,4 +1,5 @@
 use crate::{
+    gameobject::GameObject,
     model::elements::pos3::Pos3,
     screenspace::{elements::drawable::Drawable, screen::screen::Screen},
 }; // Add this line
@@ -6,7 +7,7 @@ use std::io::{self, Write};
 use std::{collections::HashMap, thread::sleep, time::Duration};
 pub struct Scene {
     screen: Screen,
-    gameobjects: HashMap<Pos3, Box<dyn Drawable>>,
+    gameobjects: HashMap<Pos3, Box<dyn GameObject>>,
 }
 impl Scene {
     pub fn with_dimensions(height: &usize, width: &usize) -> Self {
@@ -15,14 +16,16 @@ impl Scene {
             gameobjects: HashMap::new(),
         }
     }
-    pub fn add_object(&mut self, object: Box<dyn Drawable>) {
+    pub fn add_object(&mut self, object: Box<dyn GameObject>) {
         self.gameobjects.insert(object.position(), object);
     }
     pub fn run(&mut self, fps: &u64) {
         let sleep_time: Duration = Duration::from_secs(1 / fps);
         print!("\x1B[?1049h\x1B[?25l");
         io::stdout().flush().unwrap();
+        self.start_objects();
         loop {
+            self.update_objects();
             self.draw_objects();
             self.screen.draw_and_flush();
             sleep(sleep_time);
@@ -31,6 +34,16 @@ impl Scene {
     fn draw_objects(&mut self) {
         for object in self.gameobjects.iter() {
             object.1.draw(&mut self.screen);
+        }
+    }
+    fn start_objects(&mut self) {
+        for object in self.gameobjects.iter_mut() {
+            object.1.start();
+        }
+    }
+    fn update_objects(&mut self) {
+        for object in self.gameobjects.iter_mut() {
+            object.1.update(0.0);
         }
     }
 }

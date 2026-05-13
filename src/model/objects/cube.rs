@@ -33,16 +33,30 @@ impl Cube {
             fill_color: CellColor::BLACK,
         }
     }
+    pub fn rotate(&mut self, angle_x: f64, angle_y: f64, angle_z: f64) {
+        for corner in self.corners.iter_mut() {
+            corner.rotate(angle_x, angle_y, angle_z);
+        }
+    }
 }
 impl Drawable for Cube {
     fn draw(&self, screen: &mut crate::screenspace::screen::screen::Screen) {
         let edges = [
             // back face (z = cz+s): 0--2, 2--6, 6--4, 4--0
-            (0, 2), (2, 6), (6, 4), (4, 0),
+            (0, 2),
+            (2, 6),
+            (6, 4),
+            (4, 0),
             // front face (z = cz-s): 1--3, 3--7, 7--5, 5--1
-            (1, 3), (3, 7), (7, 5), (5, 1),
+            (1, 3),
+            (3, 7),
+            (7, 5),
+            (5, 1),
             // connectors between front and back
-            (0, 1), (2, 3), (6, 7), (4, 5),
+            (0, 1),
+            (2, 3),
+            (6, 7),
+            (4, 5),
         ];
 
         for &(from, to) in &edges {
