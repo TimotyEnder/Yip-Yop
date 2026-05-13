@@ -6,17 +6,17 @@ use std::io::{self, Write};
 use std::{collections::HashMap, thread::sleep, time::Duration};
 pub struct Scene {
     screen: Screen,
-    objects: HashMap<Pos3, Box<dyn Drawable>>,
+    gameobjects: HashMap<Pos3, Box<dyn Drawable>>,
 }
 impl Scene {
     pub fn with_dimensions(height: &usize, width: &usize) -> Self {
         Self {
             screen: Screen::with_dimensions(height, width),
-            objects: HashMap::new(),
+            gameobjects: HashMap::new(),
         }
     }
     pub fn add_object(&mut self, object: Box<dyn Drawable>) {
-        self.objects.insert(object.position(), object);
+        self.gameobjects.insert(object.position(), object);
     }
     pub fn run(&mut self, fps: &u64) {
         let sleep_time: Duration = Duration::from_secs(1 / fps);
@@ -29,7 +29,7 @@ impl Scene {
         }
     }
     fn draw_objects(&mut self) {
-        for object in self.objects.iter() {
+        for object in self.gameobjects.iter() {
             object.1.draw(&mut self.screen);
         }
     }

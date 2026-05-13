@@ -54,7 +54,7 @@ impl Screen {
     pub fn project_point(&self, value: &Pos3) -> ScreenPosition {
         let x = value.x() / self.width as f64;
         let y = value.y() / self.height as f64;
-        let z = value.z();
+        let z = value.z() / self.width as f64;
 
         if z == 0.0 {
             return ScreenPosition::with_pos(&0, &0);
