@@ -63,23 +63,24 @@ impl Pos3 {
         let cos = angle.cos();
         let sin = angle.sin();
 
-        // self.x = self.x;
+        let old_y = self.y;
         self.y = self.y * cos - self.z * sin;
-        self.z = self.y * sin + self.z * cos;
+        self.z = old_y * sin + self.z * cos;
     }
     fn rotate_y(&mut self, angle: f64) {
         let cos = angle.cos();
         let sin = angle.sin();
+
+        let old_x = self.x;
         self.x = self.x * cos + self.z * sin;
-        // self.y = self.y;
-        self.z = -self.x * sin + self.z * cos;
+        self.z = -old_x * sin + self.z * cos;
     }
     fn rotate_z(&mut self, angle: f64) {
         let cos = angle.cos();
         let sin = angle.sin();
 
+        let old_x = self.x;
         self.x = self.x * cos - self.y * sin;
-        self.y = self.x * sin + self.y * cos;
-        // self.z = self.z;
+        self.y = old_x * sin + self.y * cos;
     }
 }

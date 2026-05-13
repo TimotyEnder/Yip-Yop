@@ -20,12 +20,13 @@ impl Scene {
         self.gameobjects.insert(object.position(), object);
     }
     pub fn run(&mut self, fps: &u64) {
-        let sleep_time: Duration = Duration::from_secs(1 / fps);
+        let sleep_time: Duration = Duration::from_secs_f64(1.0 / *fps as f64);
+        let delta_time: f64 = 1.0 / *fps as f64;
         print!("\x1B[?1049h\x1B[?25l");
         io::stdout().flush().unwrap();
         self.start_objects();
         loop {
-            self.update_objects();
+            self.update_objects(&delta_time);
             self.draw_objects();
             self.screen.draw_and_flush();
             sleep(sleep_time);
@@ -41,9 +42,9 @@ impl Scene {
             object.1.start();
         }
     }
-    fn update_objects(&mut self) {
+    fn update_objects(&mut self, delta_time: &f64) {
         for object in self.gameobjects.iter_mut() {
-            object.1.update(0.0);
+            object.1.update(&delta_time);
         }
     }
 }
