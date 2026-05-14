@@ -26,7 +26,8 @@ impl GameObjectImpl for SpinningCube {
         let rotation_speed = 90.0_f64.to_radians(); // 90 degrees per second
         let rotation_amount: f64 = rotation_speed * *delta_time;
 
-        self.cube.rotate(&0.0, &rotation_amount, &0.0);
+        self.cube
+            .rotate(&rotation_amount, &rotation_amount, &rotation_amount);
     }
 }
 impl_gameobject! {SpinningCube}
