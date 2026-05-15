@@ -14,6 +14,7 @@ pub mod scene;
 pub mod screenspace;
 pub mod spinning_cube;
 pub mod spinning_line;
+pub mod utils;
 fn main() {
     let mut scene = Scene::with_dimensions(&(60 as usize), &(200 as usize));
     // scene.add_object(Box::new(Line::from_to(

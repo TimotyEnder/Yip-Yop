@@ -14,6 +14,7 @@ use crate::{
         },
         screen::screen::Screen,
     },
+    utils,
 };
 
 pub struct Cube {
@@ -165,7 +166,7 @@ impl Drawable for Cube {
         screen: &mut crate::screenspace::screen::screen::Screen,
     ) -> HashSet<ScreenPosition> {
         let mut colored_cells = HashSet::new();
-        let faces = [
+        let mut faces = [
             // Back face (z = cz+s)
             (4, 6, 2, 0), // top-left, top-right, bottom-right, bottom-left
             // Front face (z = cz-s)
@@ -179,9 +180,21 @@ impl Drawable for Cube {
             // Bottom face
             (0, 2, 3, 1), // back-bottom-left, back-bottom-right, front-bottom-right, front-bottom-left
         ];
-
-        //face filling with triangles
-
+        faces.sort_by(|x, y| {
+            let z_x = utils::highest_z_from_point_list(vec![
+                self.corners[x.0],
+                self.corners[x.1],
+                self.corners[x.2],
+                self.corners[x.3],
+            ]);
+            let z_y = utils::highest_z_from_point_list(vec![
+                self.corners[y.0],
+                self.corners[y.1],
+                self.corners[y.2],
+                self.corners[y.3],
+            ]);
+            z_y.partial_cmp(&z_x).unwrap_or(std::cmp::Ordering::Equal)
+        });
         for &(top_left, top_right, bottom_right, bottom_left) in &faces {
             if let Some(color) = self.fill_color {
                 // Triangle 1: top half
@@ -197,8 +210,8 @@ impl Drawable for Cube {
 
                 // Triangle 2: bottom half (use the OTHER diagonal)
                 for cell in Self::fill_triangle(
-                    &screen.project_point(&self.corners[top_left]), // ← Changed to top_left
-                    &screen.project_point(&self.corners[bottom_right]), // ← Share the diagonal
+                    &screen.project_point(&self.corners[top_left]),
+                    &screen.project_point(&self.corners[bottom_right]),
                     &screen.project_point(&self.corners[bottom_left]),
                     &color,
                     screen,
