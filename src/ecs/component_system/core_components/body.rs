@@ -1,35 +1,31 @@
 use std::{cmp::max, cmp::min, collections::HashSet};
 
 use crate::{
-    ecs::{
-        component_system::core_components::transform::{self, Transform},
-        gameobject::GameObject,
-    },
     impl_component,
-    model::elements::{
-        mesh::{self, Mesh},
-        pos3::Pos3,
-    },
+    model::elements::{mesh::Mesh, pos3::Pos3},
     screenspace::{
         elements::{cell_color::CellColor, screenspace_position::ScreenPosition},
         screen::screen::Screen,
     },
 };
 
-pub struct MeshRender {
+pub struct Body {
     mesh: Mesh,
-    transform: &'static Transform,
+    position: Pos3,
+    rotation: (f64, f64, f64),
 }
-impl MeshRender {
-    pub fn with_mesh(mesh: Mesh, transform: &'static Transform) -> Self {
-        MeshRender {
-            mesh,
-            transform: transform,
+impl Body {
+    pub fn with_mesh(mesh: Mesh, rotation: (f64, f64, f64)) -> Self {
+        let pos = mesh.center;
+        Body {
+            mesh: mesh,
+            position: pos,
+            rotation: rotation,
         }
     }
     pub fn draw(&mut self, screen: &mut Screen) {
-        let (angle_x, angle_y, angle_z) = self.transform.get_rotation();
-        let new_pos = self.transform.get_position();
+        let (angle_x, angle_y, angle_z) = self.rotation;
+        let new_pos = self.position;
         self.mesh.translate(&new_pos);
         self.mesh.rotate(&angle_x, &angle_y, &angle_z);
         for vertex in self.mesh.vertices.iter() {
@@ -150,4 +146,4 @@ fn point_inside_triangle(
     let c = 1.0 - a - b;
     a >= 0.0 && a <= 1.0 && b >= 0.0 && b <= 1.0 && c >= 0.0 && c <= 1.0
 }
-impl_component!(MeshRender);
+impl_component!(Body);

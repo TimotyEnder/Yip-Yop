@@ -21,6 +21,9 @@ impl GameObject {
     pub fn set_id(&mut self, id: &usize) {
         self.id = *id;
     }
+    pub fn get_id(&self) -> usize {
+        self.id
+    }
     pub fn add_component<T: Component>(&mut self, component: T) {
         self.components
             .insert(TypeId::of::<T>(), Box::new(component));
@@ -34,5 +37,8 @@ impl GameObject {
         self.components
             .get(&TypeId::of::<T>())
             .and_then(|boxed_value| boxed_value.as_any().downcast_ref())
+    }
+    pub fn has_component<T: Component>(self) -> bool {
+        self.components.contains_key(&TypeId::of::<T>())
     }
 }

@@ -1,10 +1,10 @@
 use crate::{
     ecs::{
         component_system::core_components::{
-            mesh_renderer::{self, MeshRender},
+            body::{self, Body},
             script_component::{self, ScriptComponent},
         },
-        gameobject::GameObject,
+        gameobject::{self, GameObject},
     },
     model::elements::pos3::Pos3,
     screenspace::{elements::drawable::Drawable, screen::screen::Screen},
@@ -14,6 +14,7 @@ use std::{collections::HashMap, thread::sleep, time::Duration};
 pub struct Scene {
     screen: Screen,
     gameobjects: HashMap<usize, GameObject>,
+    scripts: HashMap<usize, ScriptComponent>,
     current_id: usize,
 }
 impl Scene {
@@ -21,6 +22,7 @@ impl Scene {
         Self {
             screen: Screen::with_dimensions(height, width),
             gameobjects: HashMap::new(),
+            scripts: HashMap::new(),
             current_id: 0,
         }
     }
@@ -32,8 +34,8 @@ impl Scene {
             .unwrap()
             .set_id(&self.current_id);
     }
-    pub fn get_object_with_id_mut_unwrap(&mut self, id: &usize) -> &mut GameObject {
-        self.gameobjects.get_mut(&id).unwrap()
+    pub fn add_script(&mut self, script: ScriptComponent, gameobject_id: &usize) {
+        self.scripts.insert(*gameobject_id, script);
     }
     pub fn run(&mut self, fps: &u64) {
         let sleep_time: Duration = Duration::from_secs_f64(1.0 / *fps as f64);
@@ -50,24 +52,19 @@ impl Scene {
     }
     fn draw_objects(&mut self) {
         for object in self.gameobjects.iter_mut() {
-            if let Some(mesh_renderer) = object.1.get_component_mut::<MeshRender>() {
-                mesh_renderer.draw(&mut self.screen);
+            if let Some(body) = object.1.get_component_mut::<Body>() {
+                body.draw(&mut self.screen);
             }
         }
     }
     fn start_objects(&mut self) {
-        for (id, object) in self.gameobjects.iter_mut() {
-            if let Some(script_component) = object.get_component_mut::<ScriptComponent>() {
-                script_component.start();
-            }
+        for (id, script) in &mut self.scripts {
+            script.start(self.gameobjects.get_mut(id).unwrap());
         }
     }
     fn update_objects(&mut self, delta_time: &f64) {
-        for (id, object) in self.gameobjects.iter_mut() {
-            let script_component = object.get_component_mut::<ScriptComponent>();
-            if let Some(script_component) = object.get_component_mut::<ScriptComponent>() {
-                script_component.update(delta_time);
-            }
+        for (id, script) in &mut self.scripts {
+            script.update(self.gameobjects.get_mut(id).unwrap(), delta_time);
         }
     }
 }

@@ -1,3 +1,2 @@
-pub mod mesh_renderer;
+pub mod body;
 pub mod script_component;
-pub mod transform;
