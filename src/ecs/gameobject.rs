@@ -14,7 +14,7 @@ impl GameObject {
     pub fn new(name: &str) -> Self {
         GameObject {
             name: name.to_owned(),
-            id: 0,
+            id: 0, //TODO this should exist beforehand
             components: HashMap::new(),
         }
     }
