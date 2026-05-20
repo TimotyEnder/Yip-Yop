@@ -1,11 +1,14 @@
-use std::{cell::Cell, collections::HashSet, hash::Hash, vec};
+use std::vec;
 
-use crate::{model::elements::pos3::Pos3, screenspace::elements::cell_color::CellColor};
+use crate::{
+    model::elements::{edge::Edge, face::Face, pos3::Pos3},
+    screenspace::elements::cell_color::CellColor,
+};
 
 pub struct Mesh {
     pub vertices: Vec<Pos3>,
-    pub edges: Vec<(usize, usize)>,
-    pub faces: Vec<((usize, usize, usize), Option<CellColor>)>,
+    pub edges: Vec<Edge>,
+    pub faces: Vec<Face>,
     pub center: Pos3,
     pub out_line_color: CellColor,
 }
@@ -31,7 +34,7 @@ impl Mesh {
     pub fn line(from: &Pos3, to: &Pos3) -> Self {
         Mesh {
             vertices: vec![*from, *to],
-            edges: vec![(0, 1)],
+            edges: vec![Edge(0, 1)],
             faces: Vec::new(),
             center: mid_point_in_line(from, to),
             out_line_color: CellColor::WHITE,
@@ -68,50 +71,50 @@ impl Mesh {
                 Pos3::new(center.x - half_x, center.y - half_y, center.z - half_z),
             ],
             edges: vec![
-                (4, 6),
-                (6, 2),
-                (2, 0),
-                (0, 4), // Front face (z+)
-                (5, 7),
-                (7, 3),
-                (3, 1),
-                (1, 5), // Back face (z-)
-                (4, 0),
-                (0, 1),
-                (1, 5),
-                (5, 4), // Top face (y+)
-                (6, 2),
-                (2, 3),
-                (3, 7),
-                (7, 6), // Bottom face (y-)
-                (4, 6),
-                (6, 7),
-                (7, 5),
-                (5, 4), // Left face (x-)
-                (0, 2),
-                (2, 3),
-                (3, 1),
-                (1, 0), // Right face (x+)
+                Edge(4, 6),
+                Edge(6, 2),
+                Edge(2, 0),
+                Edge(0, 4), // Front face (z+)
+                Edge(5, 7),
+                Edge(7, 3),
+                Edge(3, 1),
+                Edge(1, 5), // Back face (z-)
+                Edge(4, 0),
+                Edge(0, 1),
+                Edge(1, 5),
+                Edge(5, 4), // Top face (y+)
+                Edge(6, 2),
+                Edge(2, 3),
+                Edge(3, 7),
+                Edge(7, 6), // Bottom face (y-)
+                Edge(4, 6),
+                Edge(6, 7),
+                Edge(7, 5),
+                Edge(5, 4), // Left face (x-)
+                Edge(0, 2),
+                Edge(2, 3),
+                Edge(3, 1),
+                Edge(1, 0), // Right face (x+)
             ],
             faces: vec![
                 // Front face (z+) - split into two triangles
-                ((4, 6, 2), fill_color),
-                ((4, 2, 0), fill_color),
+                Face { indices: (4, 6, 2), color: fill_color },
+                Face { indices: (4, 2, 0), color: fill_color },
                 // Back face (z-) - split into two triangles
-                ((5, 7, 3), fill_color),
-                ((5, 3, 1), fill_color),
+                Face { indices: (5, 7, 3), color: fill_color },
+                Face { indices: (5, 3, 1), color: fill_color },
                 // Top face (y+) - split into two triangles
-                ((4, 0, 1), fill_color),
-                ((4, 1, 5), fill_color),
+                Face { indices: (4, 0, 1), color: fill_color },
+                Face { indices: (4, 1, 5), color: fill_color },
                 // Bottom face (y-) - split into two triangles
-                ((6, 2, 3), fill_color),
-                ((6, 3, 7), fill_color),
+                Face { indices: (6, 2, 3), color: fill_color },
+                Face { indices: (6, 3, 7), color: fill_color },
                 // Left face (x-) - split into two triangles
-                ((4, 6, 7), fill_color),
-                ((4, 7, 5), fill_color),
+                Face { indices: (4, 6, 7), color: fill_color },
+                Face { indices: (4, 7, 5), color: fill_color },
                 // Right face (x+) - split into two triangles
-                ((0, 2, 3), fill_color),
-                ((0, 3, 1), fill_color),
+                Face { indices: (0, 2, 3), color: fill_color },
+                Face { indices: (0, 3, 1), color: fill_color },
             ],
             center: *center,
             out_line_color: CellColor::WHITE,
@@ -119,14 +122,14 @@ impl Mesh {
     }
     pub fn custom_polygon(
         points: Vec<Pos3>,
-        edges: Vec<(usize, usize)>,
-        faces: Vec<((usize, usize, usize), Option<CellColor>)>,
+        edges: Vec<Edge>,
+        faces: Vec<Face>,
         center: &Pos3,
     ) -> Self {
         Mesh {
             vertices: points,
-            edges: edges,
-            faces: faces,
+            edges,
+            faces,
             center: *center,
             out_line_color: CellColor::WHITE,
         }

@@ -5,7 +5,7 @@ use std::{
 
 use crate::{
     impl_component,
-    model::elements::{mesh::Mesh, pos3::Pos3},
+    model::elements::{edge::Edge, mesh::Mesh, pos3::Pos3},
     screenspace::{
         elements::{cell_color::CellColor, screenspace_position::ScreenPosition},
         screen::screen::Screen,
@@ -58,43 +58,44 @@ impl Body {
             let to_draw = screen.project_point(vertex);
             screen.color_cell(&to_draw, &self.mesh.out_line_color);
         }
-        for (from, to) in self.mesh.edges.iter() {
-            let from_screen = screen.project_point(&self.mesh.vertices[*from]);
-            let to_screen = screen.project_point(&self.mesh.vertices[*to]);
+        for edge in self.mesh.edges.iter() {
+            let from_screen = screen.project_point(&self.mesh.vertices[edge.0]);
+            let to_screen = screen.project_point(&self.mesh.vertices[edge.1]);
             bresenham_line_algorithm(&from_screen, &to_screen, screen, &self.mesh.out_line_color);
         }
         self.mesh.faces.sort_by(|x, y| {
             let z_x = highest_z_from_point_list(vec![
-                self.mesh.vertices[x.0.0],
-                self.mesh.vertices[x.0.1],
-                self.mesh.vertices[x.0.2],
+                self.mesh.vertices[x.indices.0],
+                self.mesh.vertices[x.indices.1],
+                self.mesh.vertices[x.indices.2],
             ]);
             let z_y = highest_z_from_point_list(vec![
-                self.mesh.vertices[y.0.0],
-                self.mesh.vertices[y.0.1],
-                self.mesh.vertices[y.0.2],
+                self.mesh.vertices[y.indices.0],
+                self.mesh.vertices[y.indices.1],
+                self.mesh.vertices[y.indices.2],
             ]);
             z_y.partial_cmp(&z_x).unwrap_or(std::cmp::Ordering::Equal)
         });
-        for ((one, two, three), optcolor) in self.mesh.faces.iter() {
-            if let Some(color) = optcolor {
+        for face in self.mesh.faces.iter() {
+            if let Some(color) = &face.color {
+                let (one, two, three) = face.indices;
                 fill_triangle(
-                    &screen.project_point(&self.mesh.vertices[*one]),
-                    &screen.project_point(&self.mesh.vertices[*two]),
-                    &screen.project_point(&self.mesh.vertices[*three]),
-                    &color,
+                    &screen.project_point(&self.mesh.vertices[one]),
+                    &screen.project_point(&self.mesh.vertices[two]),
+                    &screen.project_point(&self.mesh.vertices[three]),
+                    color,
                     screen,
                 );
                 let arr = [one, two, three];
                 for i in arr {
                     for j in arr {
                         if j != i
-                            && (self.mesh.edges.contains(&(*i, *j))
-                                || self.mesh.edges.contains(&(*i, *j)))
+                            && (self.mesh.edges.contains(&Edge(i, j))
+                                || self.mesh.edges.contains(&Edge(i, j)))
                         {
                             bresenham_line_algorithm(
-                                &screen.project_point(&self.mesh.vertices[*i]),
-                                &screen.project_point(&self.mesh.vertices[*j]),
+                                &screen.project_point(&self.mesh.vertices[i]),
+                                &screen.project_point(&self.mesh.vertices[j]),
                                 screen,
                                 &self.mesh.out_line_color,
                             );
