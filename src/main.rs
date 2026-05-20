@@ -17,7 +17,13 @@ fn main() {
     let mut scene = Scene::with_dimensions(60, 200);
     let cube = GameObjectBuilder::new_object_with_name("cube")
         .add_body(
-            Mesh::cube(&Pos3::new(0.0, 0.0, 10.0), 5.0, 5.0, 5.0, None),
+            Mesh::cube(
+                &Pos3::new(0.0, 0.0, 20.0),
+                5.0,
+                5.0,
+                5.0,
+                Some(CellColor::RED),
+            ),
             (0.0, 0.0, 0.0),
         )
         .add_script(

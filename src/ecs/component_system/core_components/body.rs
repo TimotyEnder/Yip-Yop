@@ -39,7 +39,7 @@ impl Body {
         self.rotation.1 = (self.rotation.1 + rotation.1) % 360.0;
         self.rotation.2 = (self.rotation.2 + rotation.2) % 360.0;
     }
-    pub fn draw(&mut self, screen: &mut Screen) {
+    fn correct_position_rotation(&mut self) {
         let (angle_x, angle_y, angle_z) = self.rotation;
         let (mesh_angle_x, mesh_angle_y, mesh_angle_z) = self.mesh_rotation;
         let to_rotate = (
@@ -51,6 +51,9 @@ impl Body {
         self.mesh.translate(&new_pos);
         self.mesh.rotate(to_rotate.0, to_rotate.1, to_rotate.2);
         self.mesh_rotation = self.rotation;
+    }
+    pub fn draw(&mut self, screen: &mut Screen) {
+        self.correct_position_rotation();
         for vertex in self.mesh.vertices.iter() {
             let to_draw = screen.project_point(vertex);
             screen.color_cell(&to_draw, &self.mesh.out_line_color);
@@ -82,6 +85,22 @@ impl Body {
                     &color,
                     screen,
                 );
+                let arr = [one, two, three];
+                for i in arr {
+                    for j in arr {
+                        if j != i
+                            && (self.mesh.edges.contains(&(*i, *j))
+                                || self.mesh.edges.contains(&(*i, *j)))
+                        {
+                            bresenham_line_algorithm(
+                                &screen.project_point(&self.mesh.vertices[*i]),
+                                &screen.project_point(&self.mesh.vertices[*j]),
+                                screen,
+                                &self.mesh.out_line_color,
+                            );
+                        }
+                    }
+                }
             }
         }
     }
