@@ -1,6 +1,7 @@
-use std::vec;
+use std::{cell::Cell, error::Error, io::SeekFrom, vec};
 
 use crate::{
+    io::parsing::obj_parser::parse_obj_into_mesh,
     model::elements::{edge::Edge, face::Face, pos3::Pos3},
     screenspace::elements::cell_color::CellColor,
 };
@@ -21,6 +22,9 @@ impl Mesh {
             center: Pos3::default(),
             out_line_color: CellColor::WHITE,
         }
+    }
+    pub fn from_obj(filename: &str, color: Option<CellColor>) -> Result<Mesh, Box<dyn Error>> {
+        parse_obj_into_mesh(filename, color)
     }
     pub fn dot(pos: &Pos3) -> Self {
         Mesh {
@@ -98,23 +102,59 @@ impl Mesh {
             ],
             faces: vec![
                 // Front face (z+) - split into two triangles
-                Face { indices: (4, 6, 2), color: fill_color },
-                Face { indices: (4, 2, 0), color: fill_color },
+                Face {
+                    indices: (4, 6, 2),
+                    color: fill_color,
+                },
+                Face {
+                    indices: (4, 2, 0),
+                    color: fill_color,
+                },
                 // Back face (z-) - split into two triangles
-                Face { indices: (5, 7, 3), color: fill_color },
-                Face { indices: (5, 3, 1), color: fill_color },
+                Face {
+                    indices: (5, 7, 3),
+                    color: fill_color,
+                },
+                Face {
+                    indices: (5, 3, 1),
+                    color: fill_color,
+                },
                 // Top face (y+) - split into two triangles
-                Face { indices: (4, 0, 1), color: fill_color },
-                Face { indices: (4, 1, 5), color: fill_color },
+                Face {
+                    indices: (4, 0, 1),
+                    color: fill_color,
+                },
+                Face {
+                    indices: (4, 1, 5),
+                    color: fill_color,
+                },
                 // Bottom face (y-) - split into two triangles
-                Face { indices: (6, 2, 3), color: fill_color },
-                Face { indices: (6, 3, 7), color: fill_color },
+                Face {
+                    indices: (6, 2, 3),
+                    color: fill_color,
+                },
+                Face {
+                    indices: (6, 3, 7),
+                    color: fill_color,
+                },
                 // Left face (x-) - split into two triangles
-                Face { indices: (4, 6, 7), color: fill_color },
-                Face { indices: (4, 7, 5), color: fill_color },
+                Face {
+                    indices: (4, 6, 7),
+                    color: fill_color,
+                },
+                Face {
+                    indices: (4, 7, 5),
+                    color: fill_color,
+                },
                 // Right face (x+) - split into two triangles
-                Face { indices: (0, 2, 3), color: fill_color },
-                Face { indices: (0, 3, 1), color: fill_color },
+                Face {
+                    indices: (0, 2, 3),
+                    color: fill_color,
+                },
+                Face {
+                    indices: (0, 3, 1),
+                    color: fill_color,
+                },
             ],
             center: *center,
             out_line_color: CellColor::WHITE,
