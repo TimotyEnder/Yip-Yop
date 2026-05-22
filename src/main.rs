@@ -6,14 +6,14 @@ use crate::{
     model::elements::{mesh::Mesh, pos3::Pos3},
     scene::Scene,
     screenspace::elements::cell_color::CellColor,
-    spinning_cube::SpinningCube,
+    spinner::Spinner,
 };
 pub mod ecs;
 pub mod io;
 pub mod model;
 pub mod scene;
 pub mod screenspace;
-pub mod spinning_cube;
+pub mod spinner;
 fn main() {
     let mut scene = Scene::with_dimensions(60, 200);
     // let cube = GameObjectBuilder::new_object_with_name("cube")
@@ -34,13 +34,19 @@ fn main() {
     //     .finish();
     let cube = GameObjectBuilder::new_object_with_name("cube")
         .add_body(
-            Mesh::from_obj("horse.obj", Some(CellColor::RED)).expect("could not parse obj file"),
+            Mesh::from_obj(
+                "fish.obj",
+                Some(CellColor::RED),
+                &Pos3 {
+                    x: 0.0,
+                    y: 0.0,
+                    z: 5.0,
+                },
+            )
+            .expect("could not parse obj file"),
             (0.0, 0.0, 0.0),
         )
-        .add_script(
-            ScriptComponent::new("spinner", SpinningCube::new()),
-            &mut scene,
-        )
+        .add_script(ScriptComponent::new("spinner", Spinner::new()), &mut scene)
         .finish();
     scene.add_object(cube);
     scene.run(60);

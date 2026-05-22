@@ -37,11 +37,7 @@ fn parse_line(
             mesh.vertices
                 .push(parse_vertex((&line_split[1..]).to_vec())?);
         }
-        "f" => {
-            for face in parse_face((&line_split[1..]).to_vec(), color)? {
-                mesh.faces.push(face);
-            }
-        }
+        "f" => parse_face(mesh, (&line_split[1..]).to_vec(), color)?,
         _ => {} // vn vt and other things we ignore
     }
 
@@ -54,21 +50,34 @@ fn parse_vertex(args: Vec<String>) -> Result<Pos3, Box<dyn std::error::Error>> {
     Ok(Pos3 { x, y, z })
 }
 fn parse_face(
+    mesh: &mut Mesh,
     args: Vec<String>,
     color: Option<CellColor>,
-) -> Result<Vec<Face>, Box<dyn std::error::Error>> {
+) -> Result<(), Box<dyn std::error::Error>> {
     let mut vertices = Vec::<usize>::new();
-    let mut faces = Vec::<Face>::new();
     for vertex_value in args {
         vertices.push(parse_face_vertex(vertex_value)?);
     }
-    for i in 1..vertices.len() - 1 {
-        faces.push(Face {
-            indices: (vertices[0], vertices[i - 1], vertices[i]),
+    let mut centroid = Pos3::new(0.0, 0.0, 0.0);
+    for vertex in &vertices {
+        centroid.x += mesh.vertices[*vertex].x;
+        centroid.y += mesh.vertices[*vertex].y;
+        centroid.z += mesh.vertices[*vertex].z;
+    }
+    centroid = Pos3 {
+        x: centroid.x / vertices.len() as f64,
+        y: centroid.y / vertices.len() as f64,
+        z: centroid.z / vertices.len() as f64,
+    };
+    mesh.vertices.push(centroid);
+    let centoid_index = mesh.vertices.iter().len() - 1;
+    for i in 0..vertices.len() - 1 {
+        mesh.faces.push(Face {
+            indices: (vertices[i], vertices[i + 1], centoid_index),
             color: color,
         });
     }
-    Ok(faces)
+    Ok(())
 }
 fn parse_face_vertex(arg: String) -> Result<usize, Box<dyn std::error::Error>> {
     let index: usize = arg

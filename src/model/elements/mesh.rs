@@ -23,8 +23,15 @@ impl Mesh {
             out_line_color: CellColor::WHITE,
         }
     }
-    pub fn from_obj(filename: &str, color: Option<CellColor>) -> Result<Mesh, Box<dyn Error>> {
-        parse_obj_into_mesh(filename, color)
+    pub fn from_obj(
+        filename: &str,
+        color: Option<CellColor>,
+        at_point: &Pos3,
+    ) -> Result<Mesh, Box<dyn Error>> {
+        let mut parsed_mesh = parse_obj_into_mesh(filename, color)?;
+        parsed_mesh.calculate_center();
+        parsed_mesh.translate(at_point);
+        Ok(parsed_mesh)
     }
     pub fn dot(pos: &Pos3) -> Self {
         Mesh {
@@ -34,6 +41,18 @@ impl Mesh {
             center: *pos,
             out_line_color: CellColor::WHITE,
         }
+    }
+    pub fn calculate_center(&mut self) {
+        let mut avg_pos = Pos3::new(0.0, 0.0, 0.0);
+        for vertex in &self.vertices {
+            avg_pos.x += vertex.x;
+            avg_pos.y += vertex.y;
+            avg_pos.z += vertex.z;
+        }
+        avg_pos.x /= self.vertices.len() as f64;
+        avg_pos.y /= self.vertices.len() as f64;
+        avg_pos.z /= self.vertices.len() as f64;
+        self.center = avg_pos;
     }
     pub fn line(from: &Pos3, to: &Pos3) -> Self {
         Mesh {
