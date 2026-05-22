@@ -29,7 +29,9 @@ fn parse_line(
     color: Option<CellColor>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let line_split: Vec<String> = line.split_whitespace().map(|s| s.to_string()).collect();
-
+    if line_split.len() < 1 {
+        return Ok(());
+    }
     match line_split[0].as_str() {
         "v" => {
             mesh.vertices
@@ -77,5 +79,5 @@ fn parse_face_vertex(arg: String) -> Result<usize, Box<dyn std::error::Error>> {
             "Could not split face vertex with /",
         ))?
         .parse()?;
-    Ok(index)
+    Ok(index - 1)
 }
