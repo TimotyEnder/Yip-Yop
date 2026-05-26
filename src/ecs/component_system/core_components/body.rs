@@ -160,8 +160,8 @@ fn fill_triangle(
     let min_y = min(min(one.y, two.y), three.y);
     let max_x = max(max(one.x, two.x), three.x);
     let max_y = max(max(one.y, two.y), three.y);
-    for x in min_x..max_x {
-        for y in min_y..max_y {
+    for x in min_x..=max_x {
+        for y in min_y..=max_y {
             let cur_pos = ScreenPosition::with_pos(x, y);
             if point_inside_triangle(one, two, three, &cur_pos) {
                 screen.color_cell(&cur_pos, fill_color);
