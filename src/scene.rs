@@ -9,7 +9,6 @@ use crate::{
     input::input_thread::{self, InputThread, run},
     screenspace::screen::screen::Screen,
 }; // Add this line
-use core::task;
 use once_cell::sync::Lazy;
 use std::{collections::HashMap, mem::take, thread::sleep, time::Duration};
 use std::{
@@ -56,16 +55,11 @@ impl Scene {
             self.update_objects(delta_time);
             self.draw_objects();
             self.screen.draw_and_flush();
-            let handle = tokio::spawn(async {
-                INPUT
-                    .lock()
-                    .expect("could not aquire input buffer mutex")
-                    .wipe_input_buffer()
-                    .expect("could not wipe input buffer");
-            });
-            let _result = handle
-                .await
-                .expect("input buffer panicked, mutex unaquired");
+            INPUT
+                .lock()
+                .expect("could not aquire input buffer mutex")
+                .wipe_input_buffer()
+                .expect("could not wipe input buffer");
             sleep(sleep_time);
         }
     }
