@@ -6,10 +6,18 @@ use crate::{
         },
         gameobject::{self, GameObject},
     },
+    input::input_thread::{self, InputThread},
     screenspace::screen::screen::Screen,
 }; // Add this line
-use std::io::{self, Write};
-use std::{collections::HashMap, thread::sleep, time::Duration};
+use core::task;
+use once_cell::sync::Lazy;
+use std::{collections::HashMap, mem::take, thread::sleep, time::Duration};
+use std::{
+    io::{self, Write},
+    sync::Mutex,
+};
+
+static INPUT: Lazy<Mutex<InputThread>> = Lazy::new(|| Mutex::new(InputThread::new()));
 pub struct Scene {
     screen: Screen,
     gameobjects: HashMap<usize, GameObject>,
@@ -29,16 +37,33 @@ impl Scene {
     pub fn add_script(&mut self, script: ScriptComponent, gameobject_id: usize) {
         self.scripts.insert(gameobject_id, script);
     }
-    pub fn run(&mut self, fps: u64) {
+    pub async fn run(&mut self, fps: u64) {
         let sleep_time: Duration = Duration::from_secs_f64(1.0 / fps as f64);
         let delta_time: f64 = 1.0 / fps as f64;
         print!("\x1B[?1049h\x1B[?25l");
         io::stdout().flush().unwrap();
+        std::thread::spawn(move || {
+            INPUT
+                .lock()
+                .expect("could not acquire input buffer mutex")
+                .run()
+        });
         self.start_objects();
+        let _input_stopped = InputThreadStopper; // Stops input thread when dropped
         loop {
             self.update_objects(delta_time);
             self.draw_objects();
             self.screen.draw_and_flush();
+            // let handle = tokio::spawn(async {
+            //     INPUT
+            //         .lock()
+            //         .expect("could not aquire input buffer mutex")
+            //         .wipe_input_buffer()
+            //         .expect("could not wipe input buffer");
+            // });
+            // let _result = handle
+            //     .await
+            //     .expect("input buffer panicked, mutex unaquired");
             sleep(sleep_time);
         }
     }
@@ -58,5 +83,13 @@ impl Scene {
         for (id, script) in &mut self.scripts {
             script.update(self.gameobjects.get_mut(id).unwrap(), delta_time);
         }
+    }
+}
+struct InputThreadStopper();
+impl Drop for InputThreadStopper {
+    fn drop(&mut self) {
+        print!("\x1B[?1049l\x1B[?25h");
+        INPUT.lock().unwrap().stop(); //panic in case of bad close
+        let _ = crossterm::terminal::disable_raw_mode();
     }
 }

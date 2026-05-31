@@ -15,10 +15,11 @@ pub mod model;
 pub mod scene;
 pub mod screenspace;
 pub mod spinner;
-fn main() {
+#[tokio::main]
+async fn main() {
     let mut scene = Scene::with_dimensions(60, 200);
     scene_setup(&mut scene);
-    scene.run(60);
+    scene.run(60).await;
 }
 fn scene_setup(scene: &mut Scene) {
     let cube = GameObjectBuilder::new_object_with_name("cube")

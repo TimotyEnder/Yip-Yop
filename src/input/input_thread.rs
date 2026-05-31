@@ -3,43 +3,52 @@ use crossterm::{
     terminal,
 };
 use std::{
-    io::{self, Write},
+    error::Error,
+    io::{self},
     sync::{Arc, Mutex},
 };
 
-use crate::input::input::Input;
-
 pub struct InputThread {
-    input_buffer: Arc<Mutex<Vec<Input>>>,
+    input_buffer: Arc<Mutex<Vec<crossterm::event::KeyCode>>>,
     run_flag: bool,
 }
 impl InputThread {
-    pub async fn run(&mut self) -> io::Result<()> {
+    pub fn new() -> Self {
+        Self {
+            input_buffer: Arc::new(Mutex::new(Vec::<crossterm::event::KeyCode>::new())),
+            run_flag: false,
+        }
+    }
+    pub fn run(&mut self) -> io::Result<()> {
         terminal::enable_raw_mode()?;
         self.run_flag = true;
-        let _raw_mode_guard = RawModeGuard;
         while self.run_flag {
             if let Event::Key(key_event) = event::read()? {
                 if let Ok(mut buffer) = self.input_buffer.lock() {
-                    buffer.push(Input {
-                        input: key_event.code.to_string(),
-                    });
+                    buffer.push(key_event.code);
                 }
             }
         }
         Ok(())
     }
-    pub async fn stop(&mut self) {
+    pub fn stop(&mut self) {
         self.run_flag = false;
     }
-}
-
-// A simple guard to ensure raw mode is disabled when the scope ends
-struct RawModeGuard;
-
-impl Drop for RawModeGuard {
-    fn drop(&mut self) {
-        let _ = terminal::disable_raw_mode();
+    pub fn input_recieved(
+        &self,
+        key_code: crossterm::event::KeyCode,
+    ) -> Result<bool, &'static str> {
+        if let Ok(buffer) = self.input_buffer.lock() {
+            return Ok(buffer.contains(&key_code));
+        }
+        Err("could not gain control of input buffer mutex")
+    }
+    pub fn wipe_input_buffer(&mut self) -> Result<(), &'static str> {
+        if let Ok(mut buffer) = self.input_buffer.lock() {
+            buffer.clear();
+            return Ok(());
+        }
+        Err("could not gain control of input buffer mutex")
     }
 }
 // fn main() -> io::Result<()> {
