@@ -6,7 +6,7 @@ use crate::{
         },
         gameobject::{self, GameObject},
     },
-    input::input_thread::{self, InputThread},
+    input::input_thread::{self, InputThread, run},
     screenspace::screen::screen::Screen,
 }; // Add this line
 use core::task;
@@ -17,7 +17,8 @@ use std::{
     sync::Mutex,
 };
 
-static INPUT: Lazy<Mutex<InputThread>> = Lazy::new(|| Mutex::new(InputThread::new()));
+pub static INPUT: Lazy<Mutex<InputThread>> = Lazy::new(|| Mutex::new(InputThread::new()));
+
 pub struct Scene {
     screen: Screen,
     gameobjects: HashMap<usize, GameObject>,
@@ -42,11 +43,12 @@ impl Scene {
         let delta_time: f64 = 1.0 / fps as f64;
         print!("\x1B[?1049h\x1B[?25l");
         io::stdout().flush().unwrap();
+        let (run_flag, buffer) = {
+            let input = INPUT.lock().expect("could not acquire input buffer mutex");
+            (input.get_run_flag(), input.get_input_buffer())
+        };
         std::thread::spawn(move || {
-            INPUT
-                .lock()
-                .expect("could not acquire input buffer mutex")
-                .run()
+            input_thread::run(run_flag, buffer).unwrap();
         });
         self.start_objects();
         let _input_stopped = InputThreadStopper; // Stops input thread when dropped
@@ -54,16 +56,16 @@ impl Scene {
             self.update_objects(delta_time);
             self.draw_objects();
             self.screen.draw_and_flush();
-            // let handle = tokio::spawn(async {
-            //     INPUT
-            //         .lock()
-            //         .expect("could not aquire input buffer mutex")
-            //         .wipe_input_buffer()
-            //         .expect("could not wipe input buffer");
-            // });
-            // let _result = handle
-            //     .await
-            //     .expect("input buffer panicked, mutex unaquired");
+            let handle = tokio::spawn(async {
+                INPUT
+                    .lock()
+                    .expect("could not aquire input buffer mutex")
+                    .wipe_input_buffer()
+                    .expect("could not wipe input buffer");
+            });
+            let _result = handle
+                .await
+                .expect("input buffer panicked, mutex unaquired");
             sleep(sleep_time);
         }
     }

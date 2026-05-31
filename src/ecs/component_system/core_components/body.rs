@@ -43,9 +43,9 @@ impl Body {
         let (angle_x, angle_y, angle_z) = self.rotation;
         let (mesh_angle_x, mesh_angle_y, mesh_angle_z) = self.mesh_rotation;
         let to_rotate = (
-            (angle_x - mesh_angle_x).abs(),
-            (angle_y - mesh_angle_y).abs(),
-            (angle_z - mesh_angle_z).abs(),
+            (angle_x - mesh_angle_x),
+            (angle_y - mesh_angle_y),
+            (angle_z - mesh_angle_z),
         );
         let new_pos = self.position;
         self.mesh.translate(&new_pos);

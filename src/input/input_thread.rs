@@ -3,36 +3,34 @@ use crossterm::{
     terminal,
 };
 use std::{
-    error::Error,
     io::{self},
-    sync::{Arc, Mutex},
+    sync::{
+        Arc, Mutex,
+        atomic::{AtomicBool, Ordering::Relaxed},
+    },
 };
 
 pub struct InputThread {
     input_buffer: Arc<Mutex<Vec<crossterm::event::KeyCode>>>,
-    run_flag: bool,
+    run_flag: Arc<AtomicBool>,
 }
 impl InputThread {
     pub fn new() -> Self {
         Self {
             input_buffer: Arc::new(Mutex::new(Vec::<crossterm::event::KeyCode>::new())),
-            run_flag: false,
+            run_flag: Arc::new(AtomicBool::new(false)),
         }
     }
-    pub fn run(&mut self) -> io::Result<()> {
-        terminal::enable_raw_mode()?;
-        self.run_flag = true;
-        while self.run_flag {
-            if let Event::Key(key_event) = event::read()? {
-                if let Ok(mut buffer) = self.input_buffer.lock() {
-                    buffer.push(key_event.code);
-                }
-            }
-        }
-        Ok(())
+    pub fn get_run_flag(&self) -> Arc<AtomicBool> {
+        self.run_flag.clone()
+    }
+
+    pub fn get_input_buffer(&self) -> Arc<Mutex<Vec<crossterm::event::KeyCode>>> {
+        self.input_buffer.clone()
     }
     pub fn stop(&mut self) {
-        self.run_flag = false;
+        self.run_flag
+            .store(false, std::sync::atomic::Ordering::Relaxed);
     }
     pub fn input_recieved(
         &self,
@@ -51,27 +49,15 @@ impl InputThread {
         Err("could not gain control of input buffer mutex")
     }
 }
-// fn main() -> io::Result<()> {
-//     // Enable raw mode for immediate keypress detection
-//     terminal::enable_raw_mode()?;
-//     // Ensure raw mode is disabled when the program exits
-//     let _raw_mode_guard = RawModeGuard;
-
-//     println!("Press any key (press 'q' to quit)");
-//     io::stdout().flush()?;  // Make sure the prompt appears immediately
-
-//     loop {
-//         // The read() function will now return immediately on any keypress
-//         if let Event::Key(key_event) = event::read()? {
-//             if key_event.code == KeyCode::Char('q') {
-//                 println!("\nQuitting. Goodbye!");
-//                 break;
-//             } else {
-//                 print!("\rYou pressed: {:<20}", key_event.code);
-//                 io::stdout().flush()?;
-//             }
-//         }
-//     }
-
-//     Ok(())
-// }
+pub fn run(run_flag: Arc<AtomicBool>, input_buffer: Arc<Mutex<Vec<KeyCode>>>) -> io::Result<()> {
+    terminal::enable_raw_mode()?;
+    run_flag.store(true, Relaxed);
+    while run_flag.load(Relaxed) {
+        if let Event::Key(key_event) = event::read()? {
+            if let Ok(mut buffer) = input_buffer.lock() {
+                buffer.push(key_event.code);
+            }
+        }
+    }
+    Ok(())
+}

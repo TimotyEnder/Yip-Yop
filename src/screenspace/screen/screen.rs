@@ -1,4 +1,4 @@
-use std::{arch::x86_64::_mm_shufflelo_epi16, collections::HashMap};
+use std::collections::HashMap;
 
 use crate::{
     model::elements::pos3::Pos3,
@@ -38,7 +38,7 @@ impl Screen {
                     to_print.push_str(&Self::print_rgb_cell(&CellColor::BLACK));
                 }
             }
-            to_print.push_str("\n");
+            to_print.push_str("\r\n");
         }
         print!("{}", to_print);
         io::stdout().flush().unwrap();
