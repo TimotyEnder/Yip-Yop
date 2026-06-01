@@ -7,6 +7,7 @@ use crate::{
         gameobject::{self, GameObject},
     },
     input::input_thread::{self, InputThread, run},
+    logger::logger::LOG,
     screenspace::screen::screen::Screen,
 }; // Add this line
 use once_cell::sync::Lazy;
@@ -43,7 +44,12 @@ impl Scene {
         print!("\x1B[?1049h\x1B[?25l");
         io::stdout().flush().unwrap();
         let (run_flag, buffer) = {
-            let input = INPUT.lock().expect("could not acquire input buffer mutex");
+            let input = INPUT.lock().unwrap_or_else(|error| {
+                LOG.lock()
+                    .expect("Could not aquire mutex lock to write lock")
+                    .logerr(&error.to_string().as_str());
+                panic!("{}", error);
+            });
             (input.get_run_flag(), input.get_input_buffer())
         };
         std::thread::spawn(move || {
@@ -57,9 +63,19 @@ impl Scene {
             self.screen.draw_and_flush();
             INPUT
                 .lock()
-                .expect("could not aquire input buffer mutex")
+                .unwrap_or_else(|error| {
+                    LOG.lock()
+                        .expect("Could not aquire mutex lock to write lock")
+                        .logerr(&error.to_string().as_str());
+                    panic!("{}", error);
+                })
                 .wipe_input_buffer()
-                .expect("could not wipe input buffer");
+                .unwrap_or_else(|error| {
+                    LOG.lock()
+                        .expect("Could not aquire mutex lock to write lock")
+                        .logerr(&error.to_string().as_str());
+                    panic!("{}", error);
+                });
             sleep(sleep_time);
         }
     }
@@ -85,7 +101,15 @@ struct InputThreadStopper();
 impl Drop for InputThreadStopper {
     fn drop(&mut self) {
         print!("\x1B[?1049l\x1B[?25h");
-        INPUT.lock().unwrap().stop(); //panic in case of bad close
+        INPUT
+            .lock()
+            .unwrap_or_else(|error| {
+                LOG.lock()
+                    .expect("Could not aquire mutex lock to write lock")
+                    .logerr(&error.to_string().as_str());
+                panic!("{}", error);
+            })
+            .stop();
         let _ = crossterm::terminal::disable_raw_mode();
     }
 }

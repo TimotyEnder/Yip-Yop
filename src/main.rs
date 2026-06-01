@@ -11,6 +11,7 @@ use crate::{
 pub mod ecs;
 pub mod input;
 pub mod io;
+pub mod logger;
 pub mod model;
 pub mod scene;
 pub mod screenspace;

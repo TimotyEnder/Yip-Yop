@@ -10,6 +10,8 @@ use std::{
     },
 };
 
+use crate::logger::logger::LOG;
+
 pub struct InputThread {
     input_buffer: Arc<Mutex<Vec<crossterm::event::KeyCode>>>,
     run_flag: Arc<AtomicBool>,
@@ -43,6 +45,9 @@ impl InputThread {
     }
     pub fn wipe_input_buffer(&mut self) -> Result<(), &'static str> {
         if let Ok(mut buffer) = self.input_buffer.lock() {
+            LOG.lock()
+                .expect("could not aquire logger lock")
+                .logmsg(format!("{:?}", buffer).as_str());
             buffer.clear();
             return Ok(());
         }
