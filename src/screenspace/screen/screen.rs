@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use minigw::{RcCell, RenderTexture, render_texture};
+
 use crate::{
     model::elements::pos3::Pos3,
     screenspace::elements::{cell_color::CellColor, screenspace_position::ScreenPosition},
@@ -13,10 +15,10 @@ pub struct Screen {
 
 impl Screen {
     pub fn get_width(&self) -> usize {
-        self.height
+        self.width
     }
     pub fn get_height(&self) -> usize {
-        self.width
+        self.height
     }
     pub fn with_dimensions(height: usize, width: usize) -> Self {
         Self {
@@ -25,31 +27,34 @@ impl Screen {
             height,
         }
     }
-    pub fn draw_and_flush(&mut self) {
-        let mut to_print = String::new();
-        to_print.push_str("\x1B[2J\x1B[3J\x1B[1;1H");
-        for x in 0..self.height {
-            for y in 0..self.width {
-                let current_pos = ScreenPosition::with_pos(x, y);
-                to_print.push_str("\x1B#6");
-                if (self.changed_pixels.contains_key(&current_pos)) {
-                    to_print.push_str(&Self::print_rgb_cell(&self.changed_pixels[&current_pos]));
+    pub fn draw_and_flush(&mut self, render_texture: RcCell<RenderTexture<u8>>) {
+        for y in 0..self.height {
+            for x in 0..self.width {
+                let current_pos = ScreenPosition::with_pos(y, x);
+                if let Some(target_color) = self.changed_pixels.get(&current_pos) {
+                    render_texture.as_mut().set_pixel(
+                        x as u32,
+                        y as u32,
+                        target_color.r(),
+                        target_color.g(),
+                        target_color.b(),
+                    );
                 } else {
-                    to_print.push_str(&Self::print_rgb_cell(&CellColor::BLACK));
+                    let target_color = CellColor::BLACK;
+                    render_texture.as_mut().set_pixel(
+                        x as u32,
+                        y as u32,
+                        target_color.r(),
+                        target_color.g(),
+                        target_color.b(),
+                    );
                 }
             }
-            to_print.push_str("\r\n");
         }
-        print!("{}", to_print);
-        io::stdout().flush().unwrap();
         self.changed_pixels.clear();
     }
     pub fn color_cell(&mut self, pos: &ScreenPosition, color: &CellColor) {
         self.changed_pixels.insert(*pos, *color);
-    }
-    fn print_rgb_cell(color: &CellColor) -> String {
-        let reset = "\x1b[0m";
-        format!("{}{}{}", color.ansi_code(), "█", reset)
     }
     pub fn project_point(&self, value: &Pos3) -> ScreenPosition {
         let x = value.x / self.width as f64;

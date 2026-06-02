@@ -17,38 +17,39 @@ impl ScriptBehavior for Spinner {
         let rotation_amount: f64 = rotation_speed * delta_time;
 
         if let Some(body) = gameobject.get_component_mut::<Body>() {
-            if INPUT
-                .lock()
-                .unwrap()
-                .input_recieved(crossterm::event::KeyCode::Char('w'))
-                .unwrap()
-            {
-                body.rotate((rotation_amount, 0.0, 0.0));
-            }
-            if INPUT
-                .lock()
-                .unwrap()
-                .input_recieved(crossterm::event::KeyCode::Char('s'))
-                .unwrap()
-            {
-                body.rotate((-rotation_amount, 0.0, 0.0));
-            }
-            if INPUT
-                .lock()
-                .unwrap()
-                .input_recieved(crossterm::event::KeyCode::Char('a'))
-                .unwrap()
-            {
-                body.rotate((0.0, rotation_amount, 0.0));
-            }
-            if INPUT
-                .lock()
-                .unwrap()
-                .input_recieved(crossterm::event::KeyCode::Char('d'))
-                .unwrap()
-            {
-                body.rotate((0.0, -rotation_amount, 0.0));
-            }
+            body.rotate((rotation_amount, 0.0, 0.0));
+            // if INPUT
+            //     .lock()
+            //     .unwrap()
+            //     .input_recieved(crossterm::event::KeyCode::Char('w'))
+            //     .unwrap()
+            // {
+            //     body.rotate((rotation_amount, 0.0, 0.0));
+            // }
+            // if INPUT
+            //     .lock()
+            //     .unwrap()
+            //     .input_recieved(crossterm::event::KeyCode::Char('s'))
+            //     .unwrap()
+            // {
+            //     body.rotate((-rotation_amount, 0.0, 0.0));
+            // }
+            // if INPUT
+            //     .lock()
+            //     .unwrap()
+            //     .input_recieved(crossterm::event::KeyCode::Char('a'))
+            //     .unwrap()
+            // {
+            //     body.rotate((0.0, rotation_amount, 0.0));
+            // }
+            // if INPUT
+            //     .lock()
+            //     .unwrap()
+            //     .input_recieved(crossterm::event::KeyCode::Char('d'))
+            //     .unwrap()
+            // {
+            //     body.rotate((0.0, -rotation_amount, 0.0));
+            // }
         }
     }
 }

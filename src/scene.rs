@@ -11,7 +11,12 @@ use crate::{
     screenspace::screen::screen::Screen,
 }; // Add this line
 use once_cell::sync::Lazy;
-use std::{collections::HashMap, mem::take, thread::sleep, time::Duration};
+use std::{
+    collections::HashMap,
+    mem::take,
+    thread::sleep,
+    time::{Duration, Instant},
+};
 use std::{
     io::{self, Write},
     sync::Mutex,
@@ -38,46 +43,30 @@ impl Scene {
     pub fn add_script(&mut self, script: ScriptComponent, gameobject_id: usize) {
         self.scripts.insert(gameobject_id, script);
     }
-    pub async fn run(&mut self, fps: u64) {
-        let sleep_time: Duration = Duration::from_secs_f64(1.0 / fps as f64);
-        let delta_time: f64 = 1.0 / fps as f64;
-        print!("\x1B[?1049h\x1B[?25l");
-        io::stdout().flush().unwrap();
-        let (run_flag, buffer) = {
-            let input = INPUT.lock().unwrap_or_else(|error| {
-                LOG.lock()
-                    .expect("Could not aquire mutex lock to write lock")
-                    .logerr(&error.to_string().as_str());
-                panic!("{}", error);
-            });
-            (input.get_run_flag(), input.get_input_buffer())
-        };
-        std::thread::spawn(move || {
-            input_thread::run(run_flag, buffer).unwrap();
-        });
+    pub async fn run(mut self, fps: f32) {
         self.start_objects();
-        let _input_stopped = InputThreadStopper; // Stops input thread when dropped
-        loop {
-            self.update_objects(delta_time);
-            self.draw_objects();
-            self.screen.draw_and_flush();
-            INPUT
-                .lock()
-                .unwrap_or_else(|error| {
-                    LOG.lock()
-                        .expect("Could not aquire mutex lock to write lock")
-                        .logerr(&error.to_string().as_str());
-                    panic!("{}", error);
-                })
-                .wipe_input_buffer()
-                .unwrap_or_else(|error| {
-                    LOG.lock()
-                        .expect("Could not aquire mutex lock to write lock")
-                        .logerr(&error.to_string().as_str());
-                    panic!("{}", error);
-                });
-            sleep(sleep_time);
-        }
+        let _input_stopped = InputThreadStopper;
+        let mut last_frame_time = Instant::now();
+        let frame_duration = Duration::from_secs_f32(1.0 / fps);
+        let mut frame_timer = Instant::now();
+        minigw::new::<u8, _>(
+            "Yip-Yop",
+            self.screen.get_width() as u32,
+            self.screen.get_height() as u32,
+            move |_window, _input, render_texture, _debug_ui| {
+                let frame_time = frame_timer.elapsed();
+                if frame_time < frame_duration {
+                    std::thread::sleep(frame_duration - frame_time);
+                }
+                frame_timer = Instant::now();
+                let now = Instant::now();
+                let delta_time = now.duration_since(last_frame_time);
+                last_frame_time = now;
+                self.update_objects(delta_time.as_secs_f64());
+                self.draw_objects();
+                self.screen.draw_and_flush(render_texture);
+            },
+        );
     }
     fn draw_objects(&mut self) {
         for object in self.gameobjects.iter_mut() {
