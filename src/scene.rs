@@ -61,6 +61,21 @@ impl Scene {
             self.update_objects(delta_time);
             self.draw_objects();
             self.screen.draw_and_flush();
+            INPUT
+                .lock()
+                .unwrap_or_else(|error| {
+                    LOG.lock()
+                        .expect("Could not aquire mutex lock to write lock")
+                        .logerr(&error.to_string().as_str());
+                    panic!("{}", error);
+                })
+                .wipe_input_buffer()
+                .unwrap_or_else(|error| {
+                    LOG.lock()
+                        .expect("Could not aquire mutex lock to write lock")
+                        .logerr(&error.to_string().as_str());
+                    panic!("{}", error);
+                });
             sleep(sleep_time);
         }
     }
@@ -96,9 +111,5 @@ impl Drop for InputThreadStopper {
             })
             .stop();
         let _ = crossterm::terminal::disable_raw_mode();
-        let _ = crossterm::execute!(
-            std::io::stdout(),
-            crossterm::event::PopKeyboardEnhancementFlags
-        );
     }
 }
