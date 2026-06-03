@@ -26,23 +26,6 @@ impl Screen {
         }
     }
     pub fn draw_and_flush(&mut self, buffer: &mut [u8]) {
-        // for y in 0..self.height {
-        //     for x in 0..self.width {
-        //         let current_pos = ScreenPosition::with_pos(y, x);
-        //         let idx = (y * self.width + x) * 4;
-        //         if let Some(target_color) = self.changed_pixels.get(&current_pos) {
-        //             buffer[idx] = target_color.r();
-        //             buffer[idx + 1] = target_color.g();
-        //             buffer[idx + 2] = target_color.b();
-        //             buffer[idx + 3] = 255;
-        //         } else {
-        //             buffer[idx] = 0;
-        //             buffer[idx + 1] = 0;
-        //             buffer[idx + 2] = 0;
-        //             buffer[idx + 3] = 255;
-        //         }
-        //     }
-        // }
         buffer.fill(0);
         for (pos, color) in self.changed_pixels.iter() {
             let idx = (pos.y * self.width + pos.x) * 4;

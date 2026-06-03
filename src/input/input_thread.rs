@@ -30,11 +30,4 @@ impl InputState {
     pub fn is_down(&self, key: KeyCode) -> bool {
         self.keys.contains(&key)
     }
-
-    pub fn wipe(&mut self) {
-        if let Ok(mut buffer) = LOG.lock() {
-            buffer.logmsg(format!("{:?}", self.keys).as_str());
-        }
-        self.keys.clear();
-    }
 }

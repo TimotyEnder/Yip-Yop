@@ -1,4 +1,9 @@
-use crate::ecs::component_system::core_components::{body::Body, script_component::ScriptBehavior};
+use winit::keyboard::KeyCode;
+
+use crate::{
+    ecs::component_system::core_components::{body::Body, script_component::ScriptBehavior},
+    input::input_thread::INPUT,
+};
 
 pub struct Spinner {}
 impl Spinner {
@@ -14,7 +19,18 @@ impl ScriptBehavior for Spinner {
         let rotation_amount: f64 = rotation_speed * delta_time;
 
         if let Some(body) = gameobject.get_component_mut::<Body>() {
-            body.rotate((rotation_amount, 0.0, 0.0));
+            if INPUT.lock().unwrap().is_down(KeyCode::KeyW) {
+                body.rotate((0.0, rotation_amount, 0.0));
+            }
+            if INPUT.lock().unwrap().is_down(KeyCode::KeyS) {
+                body.rotate((0.0, -rotation_amount, 0.0));
+            }
+            if INPUT.lock().unwrap().is_down(KeyCode::KeyA) {
+                body.rotate((rotation_amount, 0.0, 0.0));
+            }
+            if INPUT.lock().unwrap().is_down(KeyCode::KeyD) {
+                body.rotate((-rotation_amount, 0.0, 0.0));
+            }
         }
     }
 }
