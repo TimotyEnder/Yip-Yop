@@ -20,21 +20,38 @@ pub mod spinner;
 fn main() {
     let mut scene = Scene::with_dimensions(1000, 900);
     scene_setup(&mut scene);
-    scene.run(100.0);
+    scene.run(200.0);
 }
 fn scene_setup(scene: &mut Scene) {
-    let cube = GameObjectBuilder::new_object_with_name("cube")
+    // let cube = GameObjectBuilder::new_object_with_name("cube")
+    //     .add_body(
+    //         Mesh::cube(
+    //             &Pos3::new(0.0, 0.0, 17.0),
+    //             5.0,
+    //             5.0,
+    //             5.0,
+    //             Some(CellColor::RED),
+    //         ),
+    //         (0.0, 0.0, 0.0),
+    //     )
+    //     .add_script(ScriptComponent::new("spinner", Spinner::new()), scene)
+    //     .finish();
+    // scene.add_object(cube);
+    let fish = GameObjectBuilder::new_object_with_name("fish")
         .add_body(
-            Mesh::cube(
-                &Pos3::new(0.0, 0.0, 17.0),
-                5.0,
-                5.0,
-                5.0,
+            Mesh::from_obj(
+                "fish.obj",
                 Some(CellColor::RED),
-            ),
+                &Pos3 {
+                    x: 0.0,
+                    y: 0.0,
+                    z: 5.0,
+                },
+            )
+            .unwrap(),
             (0.0, 0.0, 0.0),
         )
         .add_script(ScriptComponent::new("spinner", Spinner::new()), scene)
         .finish();
-    scene.add_object(cube);
+    scene.add_object(fish);
 }
