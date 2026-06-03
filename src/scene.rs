@@ -1,32 +1,21 @@
-use crate::{
-    ecs::{
-        component_system::core_components::{
-            body::{self, Body},
-            script_component::{self, ScriptComponent},
-        },
-        gameobject::{self, GameObject},
-    },
-    input::input_thread::{self, InputThread, run},
-    logger::logger::LOG,
-    screenspace::screen::screen::Screen,
-}; // Add this line
-use once_cell::sync::Lazy;
-use std::{
-    collections::HashMap,
-    mem::take,
-    thread::sleep,
-    time::{Duration, Instant},
-};
-use std::{
-    io::{self, Write},
-    sync::Mutex,
-};
+use std::collections::HashMap;
+use std::sync::Arc;
+use std::time::{Duration, Instant};
 
-pub static INPUT: Lazy<Mutex<InputThread>> = Lazy::new(|| Mutex::new(InputThread::new()));
+use pixels::{Pixels, SurfaceTexture};
+use winit::event::{ElementState, Event, WindowEvent};
+use winit::event_loop::{ControlFlow, EventLoop};
+use winit::keyboard::PhysicalKey;
+use winit::window::WindowAttributes;
+
+use crate::ecs::component_system::core_components::body::Body;
+use crate::ecs::component_system::core_components::script_component::ScriptComponent;
+use crate::input::input_thread::INPUT;
+use crate::screenspace::screen::screen::Screen;
 
 pub struct Scene {
     screen: Screen,
-    gameobjects: HashMap<usize, GameObject>,
+    gameobjects: HashMap<usize, crate::ecs::gameobject::GameObject>,
     scripts: HashMap<usize, ScriptComponent>,
 }
 impl Scene {
@@ -37,36 +26,95 @@ impl Scene {
             scripts: HashMap::new(),
         }
     }
-    pub fn add_object(&mut self, object: GameObject) {
+    pub fn add_object(&mut self, object: crate::ecs::gameobject::GameObject) {
         self.gameobjects.insert(object.get_id(), object);
     }
     pub fn add_script(&mut self, script: ScriptComponent, gameobject_id: usize) {
         self.scripts.insert(gameobject_id, script);
     }
-    pub async fn run(mut self, fps: f32) {
+    pub fn run(mut self, fps: f32) {
         self.start_objects();
-        let _input_stopped = InputThreadStopper;
-        let mut last_frame_time = Instant::now();
+
+        let event_loop = EventLoop::new().unwrap();
         let frame_duration = Duration::from_secs_f32(1.0 / fps);
+        let pixel_width = self.screen.get_width() as u32;
+        let pixel_height = self.screen.get_height() as u32;
+
+        let mut window: Option<Arc<winit::window::Window>> = None;
+        let mut pixels: Option<Pixels<'static>> = None;
         let mut frame_timer = Instant::now();
-        minigw::new::<u8, _>(
-            "Yip-Yop",
-            self.screen.get_width() as u32,
-            self.screen.get_height() as u32,
-            move |_window, _input, render_texture, _debug_ui| {
-                let frame_time = frame_timer.elapsed();
-                if frame_time < frame_duration {
-                    std::thread::sleep(frame_duration - frame_time);
+        let mut last_frame_time = Instant::now();
+
+        event_loop
+            .run(move |event, active_event_loop| {
+                active_event_loop.set_control_flow(ControlFlow::Poll);
+
+                match event {
+                    Event::Resumed => {
+                        let w = Arc::new(
+                            active_event_loop
+                                .create_window(WindowAttributes::default().with_title("Yip-Yop"))
+                                .unwrap(),
+                        );
+                        let window_size = w.inner_size();
+                        let surface_texture = SurfaceTexture::new(
+                            window_size.width.max(1),
+                            window_size.height.max(1),
+                            w.clone(),
+                        );
+                        pixels =
+                            Some(Pixels::new(pixel_width, pixel_height, surface_texture).unwrap());
+                        window = Some(w);
+                    }
+                    Event::WindowEvent { event, .. } => match event {
+                        WindowEvent::CloseRequested => {
+                            active_event_loop.exit();
+                        }
+                        WindowEvent::Resized(size) => {
+                            if let Some(ref mut pixels) = pixels {
+                                let _ =
+                                    pixels.resize_surface(size.width.max(1), size.height.max(1));
+                            }
+                        }
+                        WindowEvent::RedrawRequested => {
+                            let frame_time = frame_timer.elapsed();
+                            if frame_time < frame_duration {
+                                std::thread::sleep(frame_duration - frame_time);
+                            }
+                            frame_timer = Instant::now();
+                            let now = Instant::now();
+                            let delta_time = now.duration_since(last_frame_time);
+                            last_frame_time = now;
+
+                            self.update_objects(delta_time.as_secs_f64());
+                            self.draw_objects();
+
+                            if let Some(ref mut pixels) = pixels {
+                                let frame = pixels.frame_mut();
+                                self.screen.draw_and_flush(frame);
+                                let _ = pixels.render();
+                            }
+                        }
+                        WindowEvent::KeyboardInput { event, .. } => {
+                            if let PhysicalKey::Code(keycode) = event.physical_key {
+                                let mut input = INPUT.lock().unwrap();
+                                match event.state {
+                                    ElementState::Pressed => input.press(keycode),
+                                    ElementState::Released => input.release(keycode),
+                                }
+                            }
+                        }
+                        _ => {}
+                    },
+                    Event::AboutToWait => {
+                        if let Some(ref window) = window {
+                            window.request_redraw();
+                        }
+                    }
+                    _ => {}
                 }
-                frame_timer = Instant::now();
-                let now = Instant::now();
-                let delta_time = now.duration_since(last_frame_time);
-                last_frame_time = now;
-                self.update_objects(delta_time.as_secs_f64());
-                self.draw_objects();
-                self.screen.draw_and_flush(render_texture);
-            },
-        );
+            })
+            .unwrap();
     }
     fn draw_objects(&mut self) {
         for object in self.gameobjects.iter_mut() {
@@ -84,21 +132,5 @@ impl Scene {
         for (id, script) in &mut self.scripts {
             script.update(self.gameobjects.get_mut(id).unwrap(), delta_time);
         }
-    }
-}
-struct InputThreadStopper();
-impl Drop for InputThreadStopper {
-    fn drop(&mut self) {
-        print!("\x1B[?1049l\x1B[?25h");
-        INPUT
-            .lock()
-            .unwrap_or_else(|error| {
-                LOG.lock()
-                    .expect("Could not aquire mutex lock to write lock")
-                    .logerr(&error.to_string().as_str());
-                panic!("{}", error);
-            })
-            .stop();
-        let _ = crossterm::terminal::disable_raw_mode();
     }
 }

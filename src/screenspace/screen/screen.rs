@@ -1,12 +1,10 @@
 use std::collections::HashMap;
 
-use minigw::{RcCell, RenderTexture, render_texture};
-
 use crate::{
     model::elements::pos3::Pos3,
     screenspace::elements::{cell_color::CellColor, screenspace_position::ScreenPosition},
 };
-use std::io::{self, Write};
+
 pub struct Screen {
     changed_pixels: HashMap<ScreenPosition, CellColor>,
     height: usize,
@@ -27,29 +25,31 @@ impl Screen {
             height,
         }
     }
-    pub fn draw_and_flush(&mut self, render_texture: RcCell<RenderTexture<u8>>) {
-        for y in 0..self.height {
-            for x in 0..self.width {
-                let current_pos = ScreenPosition::with_pos(y, x);
-                if let Some(target_color) = self.changed_pixels.get(&current_pos) {
-                    render_texture.as_mut().set_pixel(
-                        x as u32,
-                        y as u32,
-                        target_color.r(),
-                        target_color.g(),
-                        target_color.b(),
-                    );
-                } else {
-                    let target_color = CellColor::BLACK;
-                    render_texture.as_mut().set_pixel(
-                        x as u32,
-                        y as u32,
-                        target_color.r(),
-                        target_color.g(),
-                        target_color.b(),
-                    );
-                }
-            }
+    pub fn draw_and_flush(&mut self, buffer: &mut [u8]) {
+        // for y in 0..self.height {
+        //     for x in 0..self.width {
+        //         let current_pos = ScreenPosition::with_pos(y, x);
+        //         let idx = (y * self.width + x) * 4;
+        //         if let Some(target_color) = self.changed_pixels.get(&current_pos) {
+        //             buffer[idx] = target_color.r();
+        //             buffer[idx + 1] = target_color.g();
+        //             buffer[idx + 2] = target_color.b();
+        //             buffer[idx + 3] = 255;
+        //         } else {
+        //             buffer[idx] = 0;
+        //             buffer[idx + 1] = 0;
+        //             buffer[idx + 2] = 0;
+        //             buffer[idx + 3] = 255;
+        //         }
+        //     }
+        // }
+        buffer.fill(0);
+        for (pos, color) in self.changed_pixels.iter() {
+            let idx = (pos.y * self.width + pos.x) * 4;
+            buffer[idx] = color.r();
+            buffer[idx + 1] = color.g();
+            buffer[idx + 2] = color.b();
+            buffer[idx + 3] = 255;
         }
         self.changed_pixels.clear();
     }
