@@ -61,6 +61,7 @@ impl ApplicationHandler for Scene {
                 self.update_objects(delta_time.as_secs_f64());
                 self.draw_objects();
                 self.compile_camera_translations();
+
                 if let Some(ref mut pixels) = self.pixels {
                     let frame = pixels.frame_mut();
                     self.screen.draw_and_flush(frame);
