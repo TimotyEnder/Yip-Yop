@@ -28,7 +28,12 @@ impl Body {
             mesh_rotation: (0.0, 0.0, 0.0),
         }
     }
-
+    pub fn get_position(&self) -> Pos3 {
+        self.position
+    }
+    pub fn get_rotation(&self) -> (f64, f64, f64) {
+        self.rotation
+    }
     pub fn translate(&mut self, x: f64, y: f64, z: f64) {
         self.position.x += x;
         self.position.y += y;

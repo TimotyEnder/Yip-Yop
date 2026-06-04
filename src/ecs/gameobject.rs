@@ -40,7 +40,7 @@ impl GameObject {
             .get(&TypeId::of::<T>())
             .and_then(|boxed_value| boxed_value.as_any().downcast_ref())
     }
-    pub fn has_component<T: Component>(self) -> bool {
+    pub fn has_component<T: Component>(&self) -> bool {
         self.components.contains_key(&TypeId::of::<T>())
     }
 }

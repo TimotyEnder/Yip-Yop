@@ -37,6 +37,12 @@ fn scene_setup(scene: &mut Scene) {
     //     .add_script(ScriptComponent::new("spinner", Spinner::new()), scene)
     //     .finish();
     // scene.add_object(cube);
+    let camera = GameObjectBuilder::new_object_with_name("camera")
+        .add_body(Mesh::empty(), (0.0, 0.0, 0.0))
+        .add_camera_component(Some(CellColor::BLACK))
+        .add_script(ScriptComponent::new("spinner", Spinner::new()), scene)
+        .finish();
+    scene.add_object(camera);
     let fish = GameObjectBuilder::new_object_with_name("fish")
         .add_body(
             Mesh::from_obj(

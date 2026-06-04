@@ -9,9 +9,14 @@ pub struct Screen {
     changed_pixels: HashMap<ScreenPosition, CellColor>,
     height: usize,
     width: usize,
+    camera_translations: HashMap<usize, (Pos3, (f64, f64, f64))>,
 }
 
 impl Screen {
+    pub fn add_camera_translation(&mut self, translation: (usize, (Pos3, (f64, f64, f64)))) {
+        self.camera_translations
+            .insert(translation.0, translation.1);
+    }
     pub fn get_width(&self) -> usize {
         self.width
     }
@@ -23,6 +28,7 @@ impl Screen {
             changed_pixels: HashMap::new(),
             width,
             height,
+            camera_translations: HashMap::new(),
         }
     }
     pub fn draw_and_flush(&mut self, buffer: &mut [u8]) {
@@ -40,17 +46,32 @@ impl Screen {
         self.changed_pixels.insert(*pos, *color);
     }
     pub fn project_point(&self, value: &Pos3) -> ScreenPosition {
-        let x = value.x / self.width as f64;
-        let y = value.y / self.height as f64;
-        let z = value.z / self.width as f64;
+        let (camera_pos, camera_rot) = self
+            .camera_translations
+            .iter()
+            .nth(0)
+            .expect("No cameras present in the scene")
+            .1;
+        let mut camera_value = Pos3::new(
+            value.x - camera_pos.x,
+            value.y - camera_pos.y,
+            value.z - camera_pos.z,
+        );
+        let pivot = Pos3::new(0.0, 0.0, 0.0);
+        camera_value.rotate_around_pivot(camera_rot.0, camera_rot.1, camera_rot.2, &pivot);
 
-        if z == 0.0 {
+        let x = camera_value.x;
+        let y = camera_value.y;
+        let z = camera_value.z;
+
+        if z <= 0.0 {
             return ScreenPosition::with_pos(0, 0);
         }
 
-        let calc_x = self.height as f64 - ((y / z) + 1.0) / 2.0 * (self.height as f64);
-        let calc_y = ((x / z) + 1.0) / 2.0 * (self.width as f64);
+        let screen_x = ((x / z) + 1.0) / 2.0 * (self.width as f64);
+        let screen_y = ((y / z) + 1.0) / 2.0 * (self.height as f64);
+        let screen_y = self.height as f64 - screen_y;
 
-        ScreenPosition::with_pos(calc_x as usize, calc_y as usize)
+        ScreenPosition::with_pos(screen_x as usize, screen_y as usize)
     }
 }
