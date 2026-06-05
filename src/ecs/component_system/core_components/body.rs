@@ -40,6 +40,18 @@ impl Body {
         self.position.y += y;
         self.position.z += z;
     }
+    pub fn translate_based_on_direction(&mut self, forward: f64, left: f64, up: f64) {
+        let mut movement = Pos3::new(-left, up, -forward);
+        movement.rotate_around_pivot(
+            self.rotation.0,
+            self.rotation.1,
+            self.rotation.2,
+            &Pos3::ZERO,
+        );
+        self.position.x += movement.x;
+        self.position.y += movement.y;
+        self.position.z += movement.z;
+    }
     pub fn rotate(&mut self, rotation: (f64, f64, f64)) {
         self.rotation.0 = (self.rotation.0 + rotation.0) % TAU;
         self.rotation.1 = (self.rotation.1 + rotation.1) % TAU;

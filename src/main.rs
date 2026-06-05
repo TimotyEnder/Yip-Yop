@@ -3,12 +3,14 @@ use crate::{
         component_system::core_components::script_component::ScriptComponent,
         gameobject_builder::GameObjectBuilder,
     },
+    fps_controller_doom::FpsControllerDoom,
     model::elements::{mesh::Mesh, pos3::Pos3},
     scene::Scene,
     screenspace::elements::cell_color::CellColor,
     spinner::Spinner,
 };
 pub mod ecs;
+pub mod fps_controller_doom;
 pub mod input;
 pub mod io;
 pub mod logger;
@@ -39,7 +41,10 @@ fn scene_setup(scene: &mut Scene) {
     let camera = GameObjectBuilder::new_object_with_name("camera")
         .add_body(Mesh::empty(), (0.0, 0.0, 0.0))
         .add_camera_component(Some(CellColor::BLACK))
-        .add_script(ScriptComponent::new("spinner", Spinner::new()), scene)
+        .add_script(
+            ScriptComponent::new("fps_movement", FpsControllerDoom::new()),
+            scene,
+        )
         .finish();
     scene.add_object(camera);
     // let fish = GameObjectBuilder::new_object_with_name("fish")
