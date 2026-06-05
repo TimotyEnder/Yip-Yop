@@ -1,6 +1,7 @@
 use std::{
     cmp::{max, min},
     collections::HashSet,
+    f64::consts::TAU,
 };
 
 use crate::{
@@ -40,9 +41,9 @@ impl Body {
         self.position.z += z;
     }
     pub fn rotate(&mut self, rotation: (f64, f64, f64)) {
-        self.rotation.0 = (self.rotation.0 + rotation.0) % 360.0;
-        self.rotation.1 = (self.rotation.1 + rotation.1) % 360.0;
-        self.rotation.2 = (self.rotation.2 + rotation.2) % 360.0;
+        self.rotation.0 = (self.rotation.0 + rotation.0) % TAU;
+        self.rotation.1 = (self.rotation.1 + rotation.1) % TAU;
+        self.rotation.2 = (self.rotation.2 + rotation.2) % TAU;
     }
     fn correct_position_rotation(&mut self) {
         let (angle_x, angle_y, angle_z) = self.rotation;
@@ -69,16 +70,22 @@ impl Body {
             bresenham_line_algorithm(&from_screen, &to_screen, screen, &self.mesh.out_line_color);
         }
         self.mesh.faces.sort_by(|x, y| {
-            let z_x = highest_z_from_point_list(vec![
-                self.mesh.vertices[x.indices.0],
-                self.mesh.vertices[x.indices.1],
-                self.mesh.vertices[x.indices.2],
-            ]);
-            let z_y = highest_z_from_point_list(vec![
-                self.mesh.vertices[y.indices.0],
-                self.mesh.vertices[y.indices.1],
-                self.mesh.vertices[y.indices.2],
-            ]);
+            let z_x = highest_z_from_point_list(
+                vec![
+                    self.mesh.vertices[x.indices.0],
+                    self.mesh.vertices[x.indices.1],
+                    self.mesh.vertices[x.indices.2],
+                ],
+                screen,
+            );
+            let z_y = highest_z_from_point_list(
+                vec![
+                    self.mesh.vertices[y.indices.0],
+                    self.mesh.vertices[y.indices.1],
+                    self.mesh.vertices[y.indices.2],
+                ],
+                screen,
+            );
             z_y.partial_cmp(&z_x).unwrap_or(std::cmp::Ordering::Equal)
         });
         for face in self.mesh.faces.iter() {
@@ -96,7 +103,7 @@ impl Body {
                     for j in arr {
                         if j != i
                             && (self.mesh.edges.contains(&Edge(i, j))
-                                || self.mesh.edges.contains(&Edge(i, j)))
+                                || self.mesh.edges.contains(&Edge(j, i)))
                         {
                             bresenham_line_algorithm(
                                 &screen.project_point(&self.mesh.vertices[i]),
@@ -111,12 +118,11 @@ impl Body {
         }
     }
 }
-fn highest_z_from_point_list(positions: Vec<Pos3>) -> f64 {
-    let mut max_pos: f64 = f64::NEG_INFINITY;
-    for pos in positions.iter() {
-        max_pos = max(pos.z as isize, max_pos as isize) as f64;
-    }
-    max_pos
+fn highest_z_from_point_list(positions: Vec<Pos3>, screen: &mut Screen) -> f64 {
+    positions
+        .iter()
+        .map(|p| screen.camera_depth(p))
+        .fold(f64::NEG_INFINITY, f64::max)
 }
 fn bresenham_line_algorithm(
     from: &ScreenPosition,

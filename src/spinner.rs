@@ -19,16 +19,16 @@ impl ScriptBehavior for Spinner {
         let rotation_amount: f64 = rotation_speed * delta_time;
 
         if let Some(body) = gameobject.get_component_mut::<Body>() {
-            if INPUT.lock().unwrap().is_down(KeyCode::KeyW) {
+            if INPUT.lock().unwrap().is_down(KeyCode::KeyD) {
                 body.rotate((0.0, rotation_amount, 0.0));
             }
-            if INPUT.lock().unwrap().is_down(KeyCode::KeyS) {
+            if INPUT.lock().unwrap().is_down(KeyCode::KeyA) {
                 body.rotate((0.0, -rotation_amount, 0.0));
             }
-            if INPUT.lock().unwrap().is_down(KeyCode::KeyA) {
+            if INPUT.lock().unwrap().is_down(KeyCode::KeyS) {
                 body.rotate((rotation_amount, 0.0, 0.0));
             }
-            if INPUT.lock().unwrap().is_down(KeyCode::KeyD) {
+            if INPUT.lock().unwrap().is_down(KeyCode::KeyW) {
                 body.rotate((-rotation_amount, 0.0, 0.0));
             }
         }

@@ -35,6 +35,9 @@ impl Screen {
         buffer.fill(0);
         for (pos, color) in self.changed_pixels.iter() {
             let idx = (pos.y * self.width + pos.x) * 4;
+            if idx >= buffer.len() {
+                continue;
+            }
             buffer[idx] = color.r();
             buffer[idx + 1] = color.g();
             buffer[idx + 2] = color.b();
@@ -44,6 +47,17 @@ impl Screen {
     }
     pub fn color_cell(&mut self, pos: &ScreenPosition, color: &CellColor) {
         self.changed_pixels.insert(*pos, *color);
+    }
+    pub fn camera_depth(&self, value: &Pos3) -> f64 {
+        let (pos, rot) = self
+            .camera_translations
+            .iter()
+            .nth(0)
+            .expect("No cameras present in the scene")
+            .1;
+        let mut camera_pos = Pos3::new(value.x - pos.x, value.y - pos.y, value.z - pos.z);
+        camera_pos.rotate_around_pivot(rot.0, rot.1, rot.2, &Pos3::new(0.0, 0.0, 0.0));
+        camera_pos.z
     }
     pub fn project_point(&self, value: &Pos3) -> ScreenPosition {
         let (camera_pos, camera_rot) = self
@@ -72,6 +86,8 @@ impl Screen {
         let screen_y = ((y / z) + 1.0) / 2.0 * (self.height as f64);
         let screen_y = self.height as f64 - screen_y;
 
+        let screen_x = screen_x.clamp(0.0, (self.width - 1) as f64);
+        let screen_y = screen_y.clamp(0.0, (self.height - 1) as f64);
         ScreenPosition::with_pos(screen_x as usize, screen_y as usize)
     }
 }
