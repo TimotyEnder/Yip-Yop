@@ -64,7 +64,7 @@ impl ApplicationHandler for Scene {
 
                 if let Some(ref mut pixels) = self.pixels {
                     let frame = pixels.frame_mut();
-                    self.screen.draw_and_flush(frame);
+                    self.screen.draw_and_flush_list(frame);
                     let _ = pixels.render();
                 }
                 self.window.as_ref().unwrap().request_redraw();

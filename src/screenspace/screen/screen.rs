@@ -1,12 +1,14 @@
 use std::collections::HashMap;
 
+use winit::keyboard::KeyCode::SuperLeft;
+
 use crate::{
     model::elements::pos3::Pos3,
     screenspace::elements::{cell_color::CellColor, screenspace_position::ScreenPosition},
 };
 
 pub struct Screen {
-    changed_pixels: HashMap<ScreenPosition, CellColor>,
+    current_frame_pixel_buffer: Vec<u8>,
     height: usize,
     width: usize,
     camera_translations: HashMap<usize, (Pos3, (f64, f64, f64))>,
@@ -25,28 +27,22 @@ impl Screen {
     }
     pub fn with_dimensions(height: usize, width: usize) -> Self {
         Self {
-            changed_pixels: HashMap::new(),
+            current_frame_pixel_buffer: vec![0u8; width * height * 4],
             width,
             height,
             camera_translations: HashMap::new(),
         }
     }
-    pub fn draw_and_flush(&mut self, buffer: &mut [u8]) {
-        buffer.fill(0);
-        for (pos, color) in self.changed_pixels.iter() {
-            let idx = (pos.y * self.width + pos.x) * 4;
-            if idx >= buffer.len() {
-                continue;
-            }
-            buffer[idx] = color.r();
-            buffer[idx + 1] = color.g();
-            buffer[idx + 2] = color.b();
-            buffer[idx + 3] = 255;
-        }
-        self.changed_pixels.clear();
+    pub fn draw_and_flush_list(&mut self, buffer: &mut [u8]) {
+        buffer.copy_from_slice(&self.current_frame_pixel_buffer);
+        self.current_frame_pixel_buffer = vec![0u8; self.width * self.height * 4];
     }
     pub fn color_cell(&mut self, pos: &ScreenPosition, color: &CellColor) {
-        self.changed_pixels.insert(*pos, *color);
+        let idx = (pos.y * self.width + pos.x) * 4;
+        self.current_frame_pixel_buffer[idx] = color.r();
+        self.current_frame_pixel_buffer[idx + 1] = color.g();
+        self.current_frame_pixel_buffer[idx + 2] = color.b();
+        self.current_frame_pixel_buffer[idx + 3] = 255;
     }
     pub fn camera_depth(&self, value: &Pos3) -> f64 {
         let (pos, rot) = self
