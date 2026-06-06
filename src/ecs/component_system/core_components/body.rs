@@ -84,9 +84,17 @@ impl Body {
             .iter()
             .map(|v| screen.camera_depth(v))
             .collect();
+        let visible_vertices: Vec<bool> = self
+            .mesh
+            .vertices
+            .iter()
+            .map(|v| screen.pos3_is_visible(v))
+            .collect();
         for vertex_index in 0..self.mesh.vertices.len() {
             let to_draw = projected_vertices[vertex_index];
-            screen.color_cell(&to_draw, &self.mesh.out_line_color);
+            if visible_vertices[vertex_index] {
+                screen.color_cell(&to_draw, &self.mesh.out_line_color);
+            }
         }
         self.mesh.faces.sort_by(|x, y| {
             let z_x = highest_z_from_point_list(
@@ -111,7 +119,7 @@ impl Body {
                 ) < 0
                     || vec![one, two, three]
                         .iter()
-                        .any(|v| camera_depths[*v] < 0.0)
+                        .any(|v| camera_depths[*v] < 0.0 || !visible_vertices[*v])
                 {
                     continue;
                 }
@@ -129,7 +137,10 @@ impl Body {
                             && (self.mesh.edges.contains(&Edge(i, j))
                                 || self.mesh.edges.contains(&Edge(j, i)))
                         {
-                            if !vec![i, j].iter().any(|v| camera_depths[*v] < 0.0) {
+                            if !vec![i, j]
+                                .iter()
+                                .any(|v| camera_depths[*v] < 0.0 || !visible_vertices[*v])
+                            {
                                 bresenham_line_algorithm(
                                     &projected_vertices[i],
                                     &projected_vertices[j],

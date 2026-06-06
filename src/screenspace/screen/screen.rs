@@ -11,13 +11,16 @@ pub struct Screen {
     current_frame_pixel_buffer: Vec<u8>,
     height: usize,
     width: usize,
-    camera_translations: HashMap<usize, (Pos3, (f64, f64, f64))>,
+    camera_translations: HashMap<usize, ((Pos3, (f64, f64, f64)), f64)>,
 }
 
 impl Screen {
-    pub fn add_camera_translation(&mut self, translation: (usize, (Pos3, (f64, f64, f64)))) {
+    pub fn add_camera_translation(
+        &mut self,
+        translation: (usize, (Pos3, (f64, f64, f64)), f64),
+    ) {
         self.camera_translations
-            .insert(translation.0, translation.1);
+            .insert(translation.0, (translation.1, translation.2));
     }
     pub fn get_width(&self) -> usize {
         self.width
@@ -50,10 +53,36 @@ impl Screen {
             .iter()
             .nth(0)
             .expect("No cameras present in the scene")
-            .1;
+            .1
+            .0;
         let mut camera_pos = Pos3::new(value.x - pos.x, value.y - pos.y, value.z - pos.z);
         camera_pos.rotate_around_pivot(-rot.0, -rot.1, -rot.2, &Pos3::new(0.0, 0.0, 0.0));
         camera_pos.z
+    }
+    pub fn pos3_is_visible(&self, value: &Pos3) -> bool {
+        let ((camera_pos, camera_rot), fov_y) = self
+            .camera_translations
+            .iter()
+            .nth(0)
+            .expect("No cameras present in the scene")
+            .1;
+        let mut camera_value = Pos3::new(
+            value.x - camera_pos.x,
+            value.y - camera_pos.y,
+            value.z - camera_pos.z,
+        );
+        let pivot = Pos3::new(0.0, 0.0, 0.0);
+        camera_value.rotate_around_pivot(-camera_rot.0, -camera_rot.1, -camera_rot.2, &pivot);
+
+        if camera_value.z <= 0.0 {
+            return false;
+        }
+
+        let half_height_tan = (fov_y / 2.0).tan();
+        let half_width_tan = half_height_tan * (self.width as f64 / self.height as f64);
+
+        camera_value.y.abs() <= camera_value.z * half_height_tan
+            && camera_value.x.abs() <= camera_value.z * half_width_tan
     }
     pub fn project_point(&self, value: &Pos3) -> ScreenPosition {
         let (camera_pos, camera_rot) = self
@@ -61,7 +90,8 @@ impl Screen {
             .iter()
             .nth(0)
             .expect("No cameras present in the scene")
-            .1;
+            .1
+            .0;
         let mut camera_value = Pos3::new(
             value.x - camera_pos.x,
             value.y - camera_pos.y,

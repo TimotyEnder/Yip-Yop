@@ -146,7 +146,7 @@ impl Scene {
         }
     }
     fn compile_camera_translations(&mut self) {
-        let mut compiled_vec = Vec::<(usize, (Pos3, (f64, f64, f64)))>::new();
+        let mut compiled_vec = Vec::<(usize, (Pos3, (f64, f64, f64)), f64)>::new();
         let mut camera_entries_to_remove = Vec::<usize>::new();
 
         for entry in self.cameras.iter() {
@@ -155,7 +155,12 @@ impl Scene {
                 if let Some(body) = game_obj.get_component::<Body>() {
                     let pos = body.get_position();
                     let rot = body.get_rotation();
-                    compiled_vec.push((id, (pos, rot)));
+                    if let Some(camera) = game_obj.get_component::<Camera>() {
+                        let fov_y = camera.get_fov_y();
+                        compiled_vec.push((id, (pos, rot), fov_y));
+                    } else {
+                        camera_entries_to_remove.push(*entry); // dont panic becuase removing the camera component in the future should make the component no longer a camera
+                    }
                 } else {
                     panic!(
                         "Camera object does not have a body component. All Objects with a camera component require a body component"
