@@ -72,14 +72,21 @@ impl Body {
     }
     pub fn draw(&mut self, screen: &mut Screen) {
         self.correct_position_rotation();
+        let projected_vertices: Vec<ScreenPosition> = self
+            .mesh
+            .vertices
+            .iter()
+            .map(|v| screen.project_point(v))
+            .collect();
+        let camera_depths: Vec<f64> = self
+            .mesh
+            .vertices
+            .iter()
+            .map(|v| screen.camera_depth(v))
+            .collect();
         for vertex in self.mesh.vertices.iter() {
             let to_draw = screen.project_point(vertex);
             screen.color_cell(&to_draw, &self.mesh.out_line_color);
-        }
-        for edge in self.mesh.edges.iter() {
-            let from_screen = screen.project_point(&self.mesh.vertices[edge.0]);
-            let to_screen = screen.project_point(&self.mesh.vertices[edge.1]);
-            bresenham_line_algorithm(&from_screen, &to_screen, screen, &self.mesh.out_line_color);
         }
         self.mesh.faces.sort_by(|x, y| {
             let z_x = highest_z_from_point_list(
@@ -103,10 +110,23 @@ impl Body {
         for face in self.mesh.faces.iter() {
             if let Some(color) = &face.color {
                 let (one, two, three) = face.indices;
+                if min(
+                    min(
+                        self.mesh.vertices[one].z as isize,
+                        self.mesh.vertices[two].z as isize,
+                    ),
+                    self.mesh.vertices[three].z as isize,
+                ) < 0
+                    || vec![one, two, three]
+                        .iter()
+                        .any(|v| camera_depths[*v] < 0.0)
+                {
+                    continue;
+                }
                 fill_triangle(
-                    &screen.project_point(&self.mesh.vertices[one]),
-                    &screen.project_point(&self.mesh.vertices[two]),
-                    &screen.project_point(&self.mesh.vertices[three]),
+                    &projected_vertices[one],
+                    &projected_vertices[two],
+                    &projected_vertices[three],
                     color,
                     screen,
                 );
@@ -118,8 +138,8 @@ impl Body {
                                 || self.mesh.edges.contains(&Edge(j, i)))
                         {
                             bresenham_line_algorithm(
-                                &screen.project_point(&self.mesh.vertices[i]),
-                                &screen.project_point(&self.mesh.vertices[j]),
+                                &projected_vertices[i],
+                                &projected_vertices[j],
                                 screen,
                                 &self.mesh.out_line_color,
                             );
@@ -177,8 +197,7 @@ fn fill_triangle(
     three: &ScreenPosition,
     fill_color: &CellColor,
     screen: &mut Screen,
-) -> HashSet<ScreenPosition> {
-    let mut colored_cells = HashSet::new();
+) {
     let min_x = min(min(one.x, two.x), three.x);
     let min_y = min(min(one.y, two.y), three.y);
     let max_x = max(max(one.x, two.x), three.x);
@@ -188,11 +207,9 @@ fn fill_triangle(
             let cur_pos = ScreenPosition::with_pos(x, y);
             if point_inside_triangle(one, two, three, &cur_pos) {
                 screen.color_cell(&cur_pos, fill_color);
-                colored_cells.insert(cur_pos);
             }
         }
     }
-    colored_cells
 }
 fn point_inside_triangle(
     p1: &ScreenPosition,
