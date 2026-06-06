@@ -84,26 +84,18 @@ impl Body {
             .iter()
             .map(|v| screen.camera_depth(v))
             .collect();
-        for vertex in self.mesh.vertices.iter() {
-            let to_draw = screen.project_point(vertex);
+        for vertex_index in 0..self.mesh.vertices.len() {
+            let to_draw = projected_vertices[vertex_index];
             screen.color_cell(&to_draw, &self.mesh.out_line_color);
         }
         self.mesh.faces.sort_by(|x, y| {
             let z_x = highest_z_from_point_list(
-                vec![
-                    self.mesh.vertices[x.indices.0],
-                    self.mesh.vertices[x.indices.1],
-                    self.mesh.vertices[x.indices.2],
-                ],
-                screen,
+                vec![x.indices.0, x.indices.1, x.indices.2],
+                &camera_depths,
             );
             let z_y = highest_z_from_point_list(
-                vec![
-                    self.mesh.vertices[y.indices.0],
-                    self.mesh.vertices[y.indices.1],
-                    self.mesh.vertices[y.indices.2],
-                ],
-                screen,
+                vec![y.indices.0, y.indices.1, y.indices.2],
+                &camera_depths,
             );
             z_y.partial_cmp(&z_x).unwrap_or(std::cmp::Ordering::Equal)
         });
@@ -137,12 +129,14 @@ impl Body {
                             && (self.mesh.edges.contains(&Edge(i, j))
                                 || self.mesh.edges.contains(&Edge(j, i)))
                         {
-                            bresenham_line_algorithm(
-                                &projected_vertices[i],
-                                &projected_vertices[j],
-                                screen,
-                                &self.mesh.out_line_color,
-                            );
+                            if !vec![i, j].iter().any(|v| camera_depths[*v] < 0.0) {
+                                bresenham_line_algorithm(
+                                    &projected_vertices[i],
+                                    &projected_vertices[j],
+                                    screen,
+                                    &self.mesh.out_line_color,
+                                );
+                            }
                         }
                     }
                 }
@@ -150,10 +144,10 @@ impl Body {
         }
     }
 }
-fn highest_z_from_point_list(positions: Vec<Pos3>, screen: &mut Screen) -> f64 {
+fn highest_z_from_point_list(positions: Vec<usize>, camera_depths: &Vec<f64>) -> f64 {
     positions
         .iter()
-        .map(|p| screen.camera_depth(p))
+        .map(|p| camera_depths[*p])
         .fold(f64::NEG_INFINITY, f64::max)
 }
 fn bresenham_line_algorithm(
