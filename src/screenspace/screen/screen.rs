@@ -56,7 +56,7 @@ impl Screen {
             .expect("No cameras present in the scene")
             .1;
         let mut camera_pos = Pos3::new(value.x - pos.x, value.y - pos.y, value.z - pos.z);
-        camera_pos.rotate_around_pivot(rot.0, rot.1, rot.2, &Pos3::new(0.0, 0.0, 0.0));
+        camera_pos.rotate_around_pivot(-rot.0, -rot.1, -rot.2, &Pos3::new(0.0, 0.0, 0.0));
         camera_pos.z
     }
     pub fn project_point(&self, value: &Pos3) -> ScreenPosition {
@@ -72,7 +72,7 @@ impl Screen {
             value.z - camera_pos.z,
         );
         let pivot = Pos3::new(0.0, 0.0, 0.0);
-        camera_value.rotate_around_pivot(camera_rot.0, camera_rot.1, camera_rot.2, &pivot);
+        camera_value.rotate_around_pivot(-camera_rot.0, -camera_rot.1, -camera_rot.2, &pivot);
 
         let x = camera_value.x;
         let y = camera_value.y;

@@ -41,7 +41,7 @@ impl Body {
         self.position.z += z;
     }
     pub fn translate_based_on_direction(&mut self, forward: f64, left: f64, up: f64) {
-        let mut movement = Pos3::new(-left, up, -forward);
+        let mut movement = Pos3::new(-left, up, forward);
         movement.rotate_around_pivot(
             self.rotation.0,
             self.rotation.1,

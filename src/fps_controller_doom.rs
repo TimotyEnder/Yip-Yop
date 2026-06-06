@@ -34,7 +34,7 @@ impl ScriptBehavior for FpsControllerDoom {
                 body.translate_based_on_direction(0.0, 1.0, 0.0);
             }
             if INPUT.lock().unwrap().is_down(KeyCode::KeyD) {
-                body.translate_based_on_direction(1.0, -1.0, 0.0);
+                body.translate_based_on_direction(0.0, -1.0, 0.0);
             }
         }
     }
