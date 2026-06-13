@@ -15,10 +15,7 @@ pub struct Screen {
 }
 
 impl Screen {
-    pub fn add_camera_translation(
-        &mut self,
-        translation: (usize, (Pos3, (f64, f64, f64)), f64),
-    ) {
+    pub fn add_camera_translation(&mut self, translation: (usize, (Pos3, (f64, f64, f64)), f64)) {
         self.camera_translations
             .insert(translation.0, (translation.1, translation.2));
     }
@@ -42,10 +39,12 @@ impl Screen {
     }
     pub fn color_cell(&mut self, pos: &ScreenPosition, color: &CellColor) {
         let idx = (pos.y * self.width + pos.x) * 4;
-        self.current_frame_pixel_buffer[idx] = color.r();
-        self.current_frame_pixel_buffer[idx + 1] = color.g();
-        self.current_frame_pixel_buffer[idx + 2] = color.b();
-        self.current_frame_pixel_buffer[idx + 3] = 255;
+        if (1..self.height - 1).contains(&pos.y) && (1..self.width - 2).contains(&pos.x) {
+            self.current_frame_pixel_buffer[idx] = color.r();
+            self.current_frame_pixel_buffer[idx + 1] = color.g();
+            self.current_frame_pixel_buffer[idx + 2] = color.b();
+            self.current_frame_pixel_buffer[idx + 3] = 255;
+        }
     }
     pub fn camera_depth(&self, value: &Pos3) -> f64 {
         let (pos, rot) = self
